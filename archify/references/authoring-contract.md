@@ -420,6 +420,27 @@ parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
 parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
 and duplicate ids are refused. Children read in declaration order.
 
+Every mind map starts from the same three branches. The root names the
+subject; its children are exactly these three, in this order, and nothing
+else hangs directly from the root:
+
+1. what the problem is (`问题是什么`);
+2. how the problem was solved (`问题怎么解决的`);
+3. what the root cause is (`问题的根本原因是什么`).
+
+Write the three labels in the diagram's locale (for English: "What the problem
+is", "How it was solved", "What the root cause is"); the Chinese labels above
+are the canonical wording. Every other node goes beneath one of the three, by
+the question it answers: symptoms, scope and evidence of the failure under the
+first; steps, commands, fixes and verification under the second; causes,
+contributing factors and open questions under the third. Apply this to every
+mind map. A subject that is not a failure (a capability or repository
+breakdown) is framed as the question the map answers: what needs explaining,
+how it is handled, and why it is shaped that way. If a branch has no grounded
+content, keep it and say so in its sublabel, for example `尚未证实`. Do not
+invent a cause. Only a tree that explicitly asks for `layout.style: "classic"`
+is exempt.
+
 A tree renders as a mind map by default (`layout.style: "mindmap"`): it grows
 rightward from the root in one column per generation, each node a label-only
 pill (the sublabel stays in its passport), and the Viewer opens one generation
