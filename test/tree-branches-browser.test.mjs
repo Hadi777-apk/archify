@@ -14,7 +14,7 @@ if (chromeConfigured && !chrome) {
   throw new Error(`ARCHIFY_CHROME does not resolve to an executable browser: ${process.env.ARCHIFY_CHROME}`);
 }
 
-test('Tree branches collapse in place, follow the keyboard, reveal selections, and export complete', {
+test('Classic tree branches collapse in place, follow the keyboard, reveal selections, and export complete', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser tree checks.',
 }, async (t) => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-tree-browser-'));
@@ -32,6 +32,8 @@ test('Tree branches collapse in place, follow the keyboard, reveal selections, a
   const render = (example, name) => {
     const output = path.join(scratch, name);
     const diagram = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', example), 'utf8'));
+    // These checks pin the fixed elbow tree; the mind map has its own test.
+    diagram.layout = { ...diagram.layout, style: 'classic' };
     diagram.meta.repository = { url: 'https://github.com/example/evidence-repo', revision: git('rev-parse', 'HEAD') };
     diagram.nodes.forEach((node) => { node.sources = [{ path: 'source.js', line: 1 }]; });
     const input = path.join(scratch, name + '.json');
@@ -161,4 +163,94 @@ test('Tree branches collapse in place, follow the keyboard, reveal selections, a
 
   await load(small, '', 'dark');
   await checkSources();
+});
+
+test('Mind map branches reflow, glide, focus the camera, and export complete', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser tree checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-mindmap-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const output = path.join(scratch, 'mindmap.html');
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'tree', path.join(skillRoot, 'examples', 'payment-platform.tree.json'), output]);
+  const html = fs.readFileSync(output, 'utf8');
+  const hooked = html.replace('      function download(blob, filename) {',
+    '      window.treeExportTest = { clean: cleanExportClone };\n      function download(blob, filename) {');
+  assert.notEqual(hooked, html, 'export hook anchor');
+  fs.writeFileSync(output, hooked);
+
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(output).href + '?theme=light' });
+  await loaded;
+  await run('document.fonts.ready');
+  await run('Archify.viewerChromeLayout.whenStable()');
+  const settle = () => run('new Promise((resolve) => setTimeout(resolve, 700))');
+  const visible = `[...document.querySelectorAll('.diagram-container > svg [data-node-id]:not([data-tree-hidden])')].map((n) => n.getAttribute('data-node-id'))`;
+  const boxes = `[...document.querySelectorAll('.diagram-container > svg [data-node-id]:not([data-tree-hidden]) .tree-pill')].map((r) => { const b = r.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; })`;
+  const apart = (list) => list.every((a, i) => list.every((b, j) => j <= i || a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1]));
+
+  assert.equal(await run('Archify.treeBranches.mindmap'), true);
+  // The map opens at the first generation, laid out compactly.
+  assert.deepEqual(await run(visible), ['platform', 'orders', 'payments', 'operations']);
+  assert.ok(apart(await run(boxes)));
+  assert.notEqual(await run(`document.querySelector('[data-node-id="operations"] [data-tree-shift]').getAttribute('transform')`), null);
+
+  // Opening a branch reflows its neighbours, never overlapping, and the
+  // camera follows the branch that was opened.
+  const before = await run('Archify.view.state()');
+  await run(`document.querySelector('[data-tree-toggle="payments"]').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
+  assert.deepEqual(await run(`document.querySelector('[data-node-id="operations"]').hasAttribute('data-tree-leaving')`), false);
+  await settle();
+  assert.deepEqual(await run(visible), ['platform', 'orders', 'payments', 'operations', 'card_payment', 'wallet_payment']);
+  assert.ok(apart(await run(boxes)));
+  const after = await run('Archify.view.state()');
+  assert.ok(after.scale > before.scale, `camera zoomed toward the branch: ${before.scale} -> ${after.scale}`);
+  assert.equal(await run(`document.querySelector('[data-tree-toggle="payments"]').getAttribute('aria-expanded')`), 'true');
+
+  // The wider hit rail focus copies from each link follows it.
+  assert.equal(await run(`(() => {
+    const rail = document.querySelector('[data-relationship-hit-key][data-relationship-to="operations"] [data-tree-authored-d]');
+    return Boolean(rail) && rail.getAttribute('d') === document.querySelector('[data-edge-to="operations"]').getAttribute('d');
+  })()`), true);
+
+  // Closing it again folds the children back and leaves no motion state.
+  await run(`document.querySelector('[data-tree-toggle="payments"]').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
+  assert.equal(await run(`document.querySelectorAll('[data-tree-leaving]').length > 0`), true);
+  await settle();
+  assert.equal(await run(`document.querySelectorAll('[data-tree-leaving]').length`), 0);
+  assert.deepEqual(await run(visible), ['platform', 'orders', 'payments', 'operations']);
+
+  // Export is the complete, authored tree whatever the live layout is.
+  const exported = await run(`(() => {
+    const clone = document.querySelector('.diagram-container > svg').cloneNode(true);
+    const clean = treeExportTest.clean(clone);
+    return { clean, moved: clone.querySelectorAll('[data-tree-shift][transform], [data-tree-toggle][transform]').length,
+      authored: clone.querySelectorAll('[data-tree-authored-d]').length,
+      hidden: clone.querySelectorAll('[data-tree-hidden]').length };
+  })()`);
+  assert.deepEqual(exported, { clean: true, moved: 0, authored: 0, hidden: 0 });
+
+  // With every branch open the live layout is exactly the authored one.
+  await run(`document.querySelector('[data-tree-expand-all]').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
+  await settle();
+  assert.equal(await run(`document.querySelectorAll('[data-tree-shift][transform], [data-tree-toggle][transform]').length`), 0);
+  assert.equal(await run(`[...document.querySelectorAll('[data-tree-authored-d]')].every((path) => path.getAttribute('d') === path.getAttribute('data-tree-authored-d'))`), true);
+  assert.equal(await run('Archify.view.state().scale'), 1);
+
+  // A selection reveals a hidden node and settles at once, so focus measures it in place.
+  // Programmatic changes settle at once; only the reader's own toggle glides.
+  await run(`Archify.treeBranches.collapse('payments')`);
+  assert.equal(await run(`document.querySelectorAll('[data-tree-leaving], .diagram-container > svg [style=""]').length`), 0);
+  await run(`Archify.focus.set('card_payment')`);
+  assert.equal(await run(`document.querySelector('[data-node-id="card_payment"]').hasAttribute('data-tree-hidden')`), false);
+  assert.equal(await run(`document.querySelector('[data-node-id="card_payment"] [data-tree-shift]').style.opacity`), '');
 });

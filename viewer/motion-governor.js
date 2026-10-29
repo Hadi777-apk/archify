@@ -338,6 +338,39 @@
         style.textContent = rules.join('\n');
         document.head.appendChild(style);
       }
+      function trailOf(len) {
+        return len >= 120
+          ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
+          : (len >= 60
+            ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
+            : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+      }
+      // A Viewer module that moves an edge (a reflowing mind map) refits the
+      // flow layers drawn along it to the new path. The choreography and its
+      // timing stay as planned; only geometry follows the edge.
+      function retrace(shape) {
+        var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+        if (!d) return false;
+        var len = 0;
+        var authoredDash = '';
+        try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+        var dashed = !!(authoredDash && authoredDash !== 'none');
+        for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+          if (flow.localName === 'path') {
+            flow.setAttribute('d', d);
+            if (!len) { try { len = flow.getTotalLength(); } catch (_) {} }
+            if (!(len > 0)) continue;
+            if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+            if (flow.classList.contains('ambient-flow-wake') && !dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
+            if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
+          } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && len > 0) {
+            var end = null;
+            try { end = flow.previousElementSibling.getPointAtLength(len); } catch (_) {}
+            if (end) { flow.setAttribute('cx', end.x.toFixed(1)); flow.setAttribute('cy', end.y.toFixed(1)); }
+          }
+        }
+        return true;
+      }
       function createFlows() {
         var records = [];
         Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
@@ -397,11 +430,7 @@
           // each layer behind the head tip by its own length.
           var headLen = Math.min(14, Math.max(7, len * 0.03));
           var haloLen = Math.min(22, Math.max(12, len * 0.07));
-          var trail = len >= 120
-            ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
-            : (len >= 60
-              ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
-              : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+          var trail = trailOf(len);
           record.layers.push(
             { flow: wake, kind: 'wake', dash: len, shift: 0 },
             { flow: addPath('glow'), kind: 'comet', dash: haloLen, shift: (haloLen - headLen) / 2 },
@@ -708,6 +737,7 @@
         release: release,
         suspend: suspend,
         isPaused: effectivePaused,
-        owner: function () { return owner; }
+        owner: function () { return owner; },
+        retrace: retrace
       };
     })();

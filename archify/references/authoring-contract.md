@@ -420,12 +420,19 @@ parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
 parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
 and duplicate ids are refused. Children read in declaration order.
 
-Use `layout.direction: "down"` (default) for a shallow, balanced breakdown and
-`"right"` for a deep or leaf-heavy tree such as a repository layout; a rightward
-tree aligns each parent with its first child and scrolls vertically in the
-reader. Labels wrap between words. `collapsed: true` makes a branch start
-collapsed in the Viewer; it never removes content from the artifact, and every
-export is the complete tree. For a real codebase, ground each node in the
+A tree renders as a mind map by default (`layout.style: "mindmap"`): it grows
+rightward from the root in one column per generation, each node a label-only
+pill (the sublabel stays in its passport), and the Viewer opens one generation
+at a time. Opening or closing a branch reflows the open part of the map and
+the camera moves to that branch. Below the root every branch starts closed;
+give a node `collapsed: false` to open it at first view, or `collapsed: true`
+on the root to start with only the root. `layout.direction` is ignored in a
+mind map. Use `layout.style: "classic"` only when the reader needs the fixed
+elbow tree: `layout.direction: "down"` (its default) for a shallow, balanced
+breakdown and `"right"` for a deep or leaf-heavy one; there, `collapsed: true`
+makes a branch start collapsed and nothing visible moves. Labels wrap between
+words. Collapsing never removes content from the artifact, and every export is
+the complete tree. For a real codebase, ground each node in the
 observed path and attach `sources`. See
 [`../renderers/tree/README.md`](../renderers/tree/README.md).
 

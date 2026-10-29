@@ -41,7 +41,38 @@ inferred.
 | `tree/cycle` | a parent chain that loops; every node beneath the loop is unreachable, so this one diagnostic covers them |
 | `tree/duplicate-id` | an id declared twice |
 
-## Layout
+## Mind map (default)
+
+`layout.style` is `"mindmap"` unless it says `"classic"`. A mind map always
+grows to the right, whatever `layout.direction` says:
+
+- One column per generation, as wide as its widest node; the next column starts
+  past that width, the toggle (`toggleGap` 10 + 22) and the link reach
+  (`gapX`, 104). Nodes are label-only pills between `nodeW` (72) and
+  `nodeMaxW` (260), toned by generation from the active theme's tokens; the
+  sublabel stays in the node passport.
+- Leaves stack top to bottom in authored order, `gapY` (26) apart, and a parent
+  sits midway between its first and last child. A sibling whose children show
+  gets 44px more on each side, so neighbouring branch groups read apart.
+- Links leave through the toggle on the node's right edge and curve into the
+  child. The toggle chevron points right while the branch is closed and back
+  once it is open.
+
+The SVG always holds the complete tree at these positions, and every export is
+that tree. Below the root, branches start closed (`collapsed: false` opens one
+at first view). The Viewer then runs the same layout pass over the open nodes
+only. The renderer passes it the constants as `data-tree-mindmap`. After every
+toggle the map reflows: nodes glide to their new places, opened children grow
+out of their parent and closed ones fold back into it (420ms, instant under
+reduced motion). The node's drawing sits in a `data-tree-shift` group, so every
+Viewer module that measures nodes sees them where they are. A toggle the reader
+uses moves the camera to that branch: the node goes to the middle of the view,
+with the links that reach it and, once open, all of its children; opening zooms
+in up to 125% when the branch fits, closing keeps the zoom. Expand all returns
+to the overview, where the open map equals the authored canvas. Selecting a
+hidden node reveals it and settles at once, so focus measures it in place.
+
+## Classic layout
 
 Each generation shares one band: a row for `layout.direction: "down"` (the
 default) and a column for `"right"`. Along the other axis every subtree owns a
@@ -73,9 +104,10 @@ focusable button after the node, with `aria-expanded` and a localized label
 that states how many descendants it hides. The Viewer module
 `viewer/tree-branches.js` owns the state:
 
-- Collapsing hides descendants and their links only. Positions are computed
-  once for the complete tree, so nothing visible moves and the reader keeps
-  their place. A collapsed node shows a stacked card and its hidden count.
+- In a classic tree, collapsing hides descendants and their links only.
+  Positions are computed once for the complete tree, so nothing visible moves
+  and the reader keeps their place. A collapsed node shows a stacked card and
+  its hidden count. A mind map reflows instead (see above).
 - Keyboard: Enter/Space on a toggle; ArrowLeft collapses and ArrowRight expands
   the focused branch node. Focus stays on the control that was used.
 - **Expand all** appears at the top-left while any branch is collapsed and

@@ -77,6 +77,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "style": {
+          "enum": [
+            "mindmap",
+            "classic"
+          ]
+        },
         "direction": {
           "enum": [
             "down",
