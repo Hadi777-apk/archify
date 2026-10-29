@@ -169,6 +169,9 @@ test('tree: a mind map draws label-only pills and opens one generation at a time
   const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)[0];
   assert.match(svg, /data-tree-style="mindmap" data-tree-mindmap="64 32 26 44 104 10 11"/);
   assert.doesNotMatch(svg, /class="t-muted tree-sublabel"/);
+  // A mind map is a fixed stage, not a page as tall as the whole tree.
+  assert.match(svg, /data-camera-stage=""/);
+  assert.doesNotMatch(svg, /data-reader-fit="intrinsic-height"/);
   assert.match(svg, /data-node-id="payments"[^>]*>[\s\S]*?<g data-tree-shift="">[\s\S]*?class="[^"]*tree-pill"/);
   // Below the root every branch starts closed unless it says otherwise.
   assert.doesNotMatch(svg, /data-tree-toggle="platform"[^>]*data-tree-initially-collapsed/);

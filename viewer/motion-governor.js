@@ -345,35 +345,73 @@
             ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
             : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
       }
-      // A Viewer module that moves an edge (a reflowing mind map) refits the
-      // flow layers drawn along it to the new path. The choreography and its
-      // timing stay as planned; only geometry follows the edge.
-      function retrace(shape) {
-        var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
-        if (!d) return false;
-        var len = 0;
-        var authoredDash = '';
-        try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
-        var dashed = !!(authoredDash && authoredDash !== 'none');
-        for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
-          if (flow.localName === 'path') {
-            flow.setAttribute('d', d);
-            if (!len) { try { len = flow.getTotalLength(); } catch (_) {} }
-            if (!(len > 0)) continue;
-            if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
-            if (flow.classList.contains('ambient-flow-wake') && !dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
-            if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
-          } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && len > 0) {
-            var end = null;
-            try { end = flow.previousElementSibling.getPointAtLength(len); } catch (_) {}
-            if (end) { flow.setAttribute('cx', end.x.toFixed(1)); flow.setAttribute('cy', end.y.toFixed(1)); }
+      // A Viewer module that moves edges (a reflowing mind map) refits the flow
+      // layers drawn along them to the new paths. The choreography and its
+      // timing stay as planned; only geometry follows the edges. All paths
+      // are written, then all measured, then the rest written, so a large
+      // batch restyles the SVG once instead of once per edge. Hidden edges
+      // (passed second) only carry their path along; they are measured when
+      // they are shown again.
+      function retrace(shapes, hiddenShapes) {
+        (hiddenShapes || []).forEach(function (shape) {
+          var hiddenPath = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+          if (!hiddenPath) return;
+          for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+            if (flow.localName === 'path') flow.setAttribute('d', hiddenPath);
           }
-        }
-        return true;
+        });
+        var jobs = (Array.isArray(shapes) ? shapes : [shapes]).map(function (shape) {
+          var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+          if (!d) return null;
+          var flows = [];
+          for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+            flows.push(flow);
+            if (flow.localName === 'path') flow.setAttribute('d', d);
+          }
+          return flows.length ? { shape: shape, flows: flows } : null;
+        }).filter(Boolean);
+        jobs.forEach(function (job) {
+          var path = job.flows.find(function (flow) { return flow.localName === 'path'; });
+          job.len = 0;
+          try { job.len = path.getTotalLength(); } catch (_) {}
+          try { if (job.len > 0) job.end = path.getPointAtLength(job.len); } catch (_) {}
+          var authoredDash = '';
+          try { authoredDash = window.getComputedStyle(job.shape).strokeDasharray; } catch (_) {}
+          job.dashed = !!(authoredDash && authoredDash !== 'none');
+        });
+        jobs.forEach(function (job) {
+          var len = job.len;
+          if (!(len > 0)) return;
+          job.flows.forEach(function (flow) {
+            if (flow.localName === 'path') {
+              if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+              if (flow.classList.contains('ambient-flow-wake') && !job.dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
+              if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
+            } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && job.end) {
+              flow.setAttribute('cx', job.end.x.toFixed(1));
+              flow.setAttribute('cy', job.end.y.toFixed(1));
+            }
+          });
+        });
+        return jobs.length > 0;
       }
       function createFlows() {
         var records = [];
-        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
+        var shapes = Array.prototype.slice.call(svg.querySelectorAll('path[data-animate="edge"]'));
+        // Read each edge's length, landing point and dash before inserting any
+        // overlay: a read after an insertion restyles the growing SVG once per
+        // edge, which stalls large diagrams. An edge with its own motion path
+        // is measured on its wake below, as before.
+        var measures = shapes.map(function (shape) {
+          if (shape.hasAttribute('data-motion-path') || !shape.getAttribute('d')) return null;
+          var measure = { len: 0, end: null, dash: '' };
+          try { measure.len = shape.getTotalLength(); } catch (_) {}
+          try { if (measure.len > 0) measure.end = shape.getPointAtLength(measure.len); } catch (_) {}
+          try { measure.dash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          return measure;
+        });
+        shapes.forEach(function (shape, index) {
+          var measure = measures[index];
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
           var anchor = shape;
@@ -400,7 +438,8 @@
           }
           var wake = addPath('wake');
           var len = 0;
-          try { len = wake.getTotalLength(); } catch (_) {}
+          if (measure) len = measure.len;
+          else { try { len = wake.getTotalLength(); } catch (_) {} }
           if (!(len > 0)) {
             wake.remove();
             return;
@@ -421,7 +460,8 @@
           // the wake brightens only the authored segments and never fills the
           // gaps back into a solid line.
           var authoredDash = '';
-          try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          if (measure) authoredDash = measure.dash;
+          else { try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {} }
           record.dashed = !!(authoredDash && authoredDash !== 'none');
           wake.style.setProperty('--flow-dasharray', record.dashed ? authoredDash : len.toFixed(1) + ' ' + len.toFixed(1));
           // Absolute caps keep the comet a slim streak on long edges instead
@@ -447,7 +487,8 @@
           // The ripple lands where the comet does; keep it out of the edge's
           // mask so it can bloom over the node boundary.
           var end = null;
-          try { end = wake.getPointAtLength(len); } catch (_) {}
+          if (measure) end = measure.end;
+          else { try { end = wake.getPointAtLength(len); } catch (_) {} }
           if (end) {
             var ripple = document.createElementNS(SVG_NS, 'circle');
             ripple.setAttribute('cx', end.x.toFixed(1));

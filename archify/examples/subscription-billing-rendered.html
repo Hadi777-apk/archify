@@ -923,6 +923,35 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .diagram-container.is-panning { cursor: grabbing; user-select: none; }
     .diagram-container.is-panning svg { transition: none; }
 
+    /* A stage (a mind map) is one fixed rectangle. The camera sizes the SVG to
+       its true size times the zoom and translates it inside the clipped box, so
+       the page never grows with the diagram and panning stays a composited move. */
+    .diagram-container[data-camera-stage] {
+      overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: contain;
+      cursor: grab;
+    }
+    .diagram-container[data-camera-stage].is-panning { cursor: grabbing; }
+    .diagram-container[data-camera-stage]::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--archify-stage-band, 0px);
+      background: var(--panel);
+      border-top: 1px solid var(--panel-border);
+      z-index: 11;
+    }
+    .diagram-container[data-camera-stage] > svg {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: 0;
+      transition: none;
+      will-change: transform;
+    }
+
     .diagram-nav {
       position: absolute;
       right: 1rem;
@@ -6514,6 +6543,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
         clone.style.removeProperty('clip-path');
+        // A stage camera sizes the SVG to its zoom; the artifact keeps its viewBox.
+        if (clone.hasAttribute('data-camera-stage')) {
+          clone.style.removeProperty('width');
+          clone.style.removeProperty('height');
+        }
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');
@@ -8408,35 +8442,73 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
             : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
       }
-      // A Viewer module that moves an edge (a reflowing mind map) refits the
-      // flow layers drawn along it to the new path. The choreography and its
-      // timing stay as planned; only geometry follows the edge.
-      function retrace(shape) {
-        var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
-        if (!d) return false;
-        var len = 0;
-        var authoredDash = '';
-        try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
-        var dashed = !!(authoredDash && authoredDash !== 'none');
-        for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
-          if (flow.localName === 'path') {
-            flow.setAttribute('d', d);
-            if (!len) { try { len = flow.getTotalLength(); } catch (_) {} }
-            if (!(len > 0)) continue;
-            if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
-            if (flow.classList.contains('ambient-flow-wake') && !dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
-            if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
-          } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && len > 0) {
-            var end = null;
-            try { end = flow.previousElementSibling.getPointAtLength(len); } catch (_) {}
-            if (end) { flow.setAttribute('cx', end.x.toFixed(1)); flow.setAttribute('cy', end.y.toFixed(1)); }
+      // A Viewer module that moves edges (a reflowing mind map) refits the flow
+      // layers drawn along them to the new paths. The choreography and its
+      // timing stay as planned; only geometry follows the edges. All paths
+      // are written, then all measured, then the rest written, so a large
+      // batch restyles the SVG once instead of once per edge. Hidden edges
+      // (passed second) only carry their path along; they are measured when
+      // they are shown again.
+      function retrace(shapes, hiddenShapes) {
+        (hiddenShapes || []).forEach(function (shape) {
+          var hiddenPath = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+          if (!hiddenPath) return;
+          for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+            if (flow.localName === 'path') flow.setAttribute('d', hiddenPath);
           }
-        }
-        return true;
+        });
+        var jobs = (Array.isArray(shapes) ? shapes : [shapes]).map(function (shape) {
+          var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+          if (!d) return null;
+          var flows = [];
+          for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+            flows.push(flow);
+            if (flow.localName === 'path') flow.setAttribute('d', d);
+          }
+          return flows.length ? { shape: shape, flows: flows } : null;
+        }).filter(Boolean);
+        jobs.forEach(function (job) {
+          var path = job.flows.find(function (flow) { return flow.localName === 'path'; });
+          job.len = 0;
+          try { job.len = path.getTotalLength(); } catch (_) {}
+          try { if (job.len > 0) job.end = path.getPointAtLength(job.len); } catch (_) {}
+          var authoredDash = '';
+          try { authoredDash = window.getComputedStyle(job.shape).strokeDasharray; } catch (_) {}
+          job.dashed = !!(authoredDash && authoredDash !== 'none');
+        });
+        jobs.forEach(function (job) {
+          var len = job.len;
+          if (!(len > 0)) return;
+          job.flows.forEach(function (flow) {
+            if (flow.localName === 'path') {
+              if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+              if (flow.classList.contains('ambient-flow-wake') && !job.dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
+              if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
+            } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && job.end) {
+              flow.setAttribute('cx', job.end.x.toFixed(1));
+              flow.setAttribute('cy', job.end.y.toFixed(1));
+            }
+          });
+        });
+        return jobs.length > 0;
       }
       function createFlows() {
         var records = [];
-        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
+        var shapes = Array.prototype.slice.call(svg.querySelectorAll('path[data-animate="edge"]'));
+        // Read each edge's length, landing point and dash before inserting any
+        // overlay: a read after an insertion restyles the growing SVG once per
+        // edge, which stalls large diagrams. An edge with its own motion path
+        // is measured on its wake below, as before.
+        var measures = shapes.map(function (shape) {
+          if (shape.hasAttribute('data-motion-path') || !shape.getAttribute('d')) return null;
+          var measure = { len: 0, end: null, dash: '' };
+          try { measure.len = shape.getTotalLength(); } catch (_) {}
+          try { if (measure.len > 0) measure.end = shape.getPointAtLength(measure.len); } catch (_) {}
+          try { measure.dash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          return measure;
+        });
+        shapes.forEach(function (shape, index) {
+          var measure = measures[index];
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
           var anchor = shape;
@@ -8463,7 +8535,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
           var wake = addPath('wake');
           var len = 0;
-          try { len = wake.getTotalLength(); } catch (_) {}
+          if (measure) len = measure.len;
+          else { try { len = wake.getTotalLength(); } catch (_) {} }
           if (!(len > 0)) {
             wake.remove();
             return;
@@ -8484,7 +8557,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           // the wake brightens only the authored segments and never fills the
           // gaps back into a solid line.
           var authoredDash = '';
-          try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          if (measure) authoredDash = measure.dash;
+          else { try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {} }
           record.dashed = !!(authoredDash && authoredDash !== 'none');
           wake.style.setProperty('--flow-dasharray', record.dashed ? authoredDash : len.toFixed(1) + ' ' + len.toFixed(1));
           // Absolute caps keep the comet a slim streak on long edges instead
@@ -8510,7 +8584,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           // The ripple lands where the comet does; keep it out of the edge's
           // mask so it can bloom over the node boundary.
           var end = null;
-          try { end = wake.getPointAtLength(len); } catch (_) {}
+          if (measure) end = measure.end;
+          else { try { end = wake.getPointAtLength(len); } catch (_) {} }
           if (end) {
             var ripple = document.createElementNS(SVG_NS, 'circle');
             ripple.setAttribute('cx', end.x.toFixed(1));
@@ -8903,6 +8978,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          With every branch open the positions are exactly the authored ones. */
       var mindmap = svg.getAttribute('data-tree-style') === 'mindmap' ? buildMindmap() : null;
       var motionFrame = 0;
+      // The open part of the map, from the canvas origin to its far margin.
+      // A stage camera holds its view to these bounds.
+      var openBounds = null;
+
+      function boundsOf(pos) {
+        var gap = mindmap.gap;
+        var right = 0;
+        var bottom = 0;
+        Object.keys(pos).forEach(function (id) {
+          var item = mindmap.items[id];
+          right = Math.max(right, pos[id].x + item.w + (item.children.length ? gap.toggle + gap.r * 2 : 0));
+          bottom = Math.max(bottom, pos[id].y + item.h);
+        });
+        return { x0: 0, y0: 0, x1: right + gap.margin, y1: bottom + gap.margin };
+      }
+
+      function setBounds(bounds) {
+        openBounds = bounds;
+        if (Archify.view && typeof Archify.view.refresh === 'function') Archify.view.refresh();
+      }
 
       function buildMindmap() {
         var values = (svg.getAttribute('data-tree-mindmap') || '').split(' ').map(Number);
@@ -9034,6 +9129,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         options = options || {};
         var pos = mindmapLayout();
         var moves = [];
+        var settledBounds = boundsOf(pos);
         mindmap.order.forEach(function (item) {
           var to = pos[item.id];
           if (to) {
@@ -9060,19 +9156,30 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             var to = shape.closest('[data-relationship-hit-key]').getAttribute('data-relationship-to');
             (rails[to] = rails[to] || []).push(shape);
           });
+          var traced = [];
+          var folded = [];
           moves.forEach(function (move) {
             move.item.cur = move.to;
             draw(move.item, true);
             if (move.item.edge) {
               (rails[move.item.id] || []).forEach(function (shape) { shape.setAttribute('d', move.item.edge.getAttribute('d')); });
-              // Live motion draws its flow layers along each link; they follow it too.
-              if (Archify.motionGovernor && typeof Archify.motionGovernor.retrace === 'function') Archify.motionGovernor.retrace(move.item.edge);
+              (move.leaving ? folded : traced).push(move.item.edge);
             }
             [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.removeAttribute('data-tree-leaving'); });
           });
+          // Live motion draws its flow layers along the links; they follow in
+          // one batch. Hidden links only carry their path until they open.
+          if ((traced.length || folded.length) && Archify.motionGovernor && typeof Archify.motionGovernor.retrace === 'function') Archify.motionGovernor.retrace(traced, folded);
+          setBounds(settledBounds);
           if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();
         };
         if (instant) { settle(); return pos; }
+        setBounds(openBounds ? {
+          x0: 0,
+          y0: 0,
+          x1: Math.max(openBounds.x1, settledBounds.x1),
+          y1: Math.max(openBounds.y1, settledBounds.y1)
+        } : settledBounds);
         moves.forEach(function (move) {
           if (move.leaving) [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.setAttribute('data-tree-leaving', ''); });
         });
@@ -9210,6 +9317,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       return {
         active: true,
         mindmap: Boolean(mindmap),
+        bounds: function () { return openBounds ? { x0: openBounds.x0, y0: openBounds.y0, x1: openBounds.x1, y1: openBounds.y1 } : null; },
         toggle: toggle,
         collapse: function (id) { return setCollapsed(id, true); },
         expand: function (id) { return setCollapsed(id, false); },
@@ -11619,8 +11727,30 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
         return width * height;
       }
+      // A stage (data-camera-stage) is a fixed box whose dock floats over the
+      // canvas, so it never reserves room; what the resting dock must stay
+      // clear of is the open part of the diagram as it sits in the box.
+      function isStage() {
+        return Boolean(container && container.hasAttribute('data-camera-stage'));
+      }
+      function openStageRect() {
+        var bounds = Archify.treeBranches && typeof Archify.treeBranches.bounds === 'function' ? Archify.treeBranches.bounds() : null;
+        var viewBox = svg.viewBox && svg.viewBox.baseVal;
+        if (!bounds || !viewBox || !viewBox.width) return null;
+        var rect = svg.getBoundingClientRect();
+        var box = container.getBoundingClientRect();
+        var k = rect.width / viewBox.width;
+        var left = Math.max(box.left, rect.left + (bounds.x0 - viewBox.x) * k);
+        var top = Math.max(box.top, rect.top + (bounds.y0 - viewBox.y) * k);
+        var right = Math.min(box.right, rect.left + (bounds.x1 - viewBox.x) * k);
+        var band = parseFloat(container.style.getPropertyValue('--archify-stage-band')) || 0;
+        var bottom = Math.min(box.bottom - band, rect.top + (bounds.y1 - viewBox.y) * k);
+        if (right <= left || bottom <= top) return null;
+        return { x: left, y: top, left: left, top: top, right: right, bottom: bottom, width: right - left, height: bottom - top };
+      }
       function protectedStageRect() {
         if (!svg) return null;
+        if (isStage()) return openStageRect();
         var rect = svg.getBoundingClientRect();
         var transform = '';
         try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
@@ -11677,7 +11807,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function writeReserve(next, options) {
         options = options || {};
-        next = Math.max(0, Math.ceil(next));
+        next = isStage() ? 0 : Math.max(0, Math.ceil(next));
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
@@ -12006,6 +12136,182 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
 
+      /* Stage. A diagram that declares data-camera-stage (a mind map) is one
+         fixed rectangle, like a notebook canvas: the page does not grow with
+         it. The SVG is drawn at its true size times the zoom inside the
+         clipped container, the camera only translates it (a composited move),
+         and the camera is held to the part of the diagram that is open, which
+         the diagram reports as stage bounds. Glides scale the drawn canvas
+         and commit the new size once, at the end. */
+      var stage = svg.hasAttribute('data-camera-stage');
+      var stageSize = 0;
+      var stageInset = { x: 0, y: 0, left: 0, top: 0 };
+      var stageGlide = 0;
+      // The stage takes the window height the rest of the page leaves, so
+      // the page fits one screen; a strip at its foot holds the dock, and the
+      // canvas ends above it.
+      var stageBand = 0;
+      function fitStage() {
+        var current = container.offsetHeight;
+        var rest = document.documentElement.scrollHeight - current;
+        var next = Math.max(360, Math.floor(window.innerHeight - rest));
+        if (Math.abs(next - current) >= 1) container.style.height = next + 'px';
+        var style = getComputedStyle(container);
+        stageInset = {
+          left: parseFloat(style.paddingLeft) || 0,
+          top: parseFloat(style.paddingTop) || 0,
+          x: (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0),
+          y: (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0)
+        };
+        var band = 0;
+        if (outBtn && outBtn.closest('.diagram-nav')) {
+          var dock = outBtn.closest('.diagram-nav').getBoundingClientRect();
+          band = Math.ceil(container.getBoundingClientRect().bottom - container.clientTop - dock.top + 10);
+        }
+        if (band !== stageBand) {
+          stageBand = Math.max(0, band);
+          container.style.setProperty('--archify-stage-band', stageBand + 'px');
+        }
+      }
+      function stageBox() {
+        return {
+          width: Math.max(1, container.clientWidth - stageInset.x),
+          height: Math.max(1, container.clientHeight - stageInset.y - Math.max(0, stageBand - (stageInset.y - stageInset.top)))
+        };
+      }
+      function stageBounds() {
+        var reported = Archify.treeBranches && typeof Archify.treeBranches.bounds === 'function' ? Archify.treeBranches.bounds() : null;
+        return reported || { x0: viewBox.x, y0: viewBox.y, x1: viewBox.x + viewBox.width, y1: viewBox.y + viewBox.height };
+      }
+      // Keep the open diagram on the stage: a larger one may be panned until
+      // its far edge meets the stage edge; a smaller one moves within it.
+      function clampStage(camera) {
+        var box = stageBox();
+        var bounds = stageBounds();
+        var k = camera.scale;
+        function axis(value, start, end, size) {
+          var near = -start * k;
+          var far = size - end * k;
+          return Math.min(Math.max(near, far), Math.max(Math.min(near, far), value));
+        }
+        camera.x = axis(camera.x, bounds.x0 - viewBox.x, bounds.x1 - viewBox.x, box.width);
+        camera.y = axis(camera.y, bounds.y0 - viewBox.y, bounds.y1 - viewBox.y, box.height);
+        return camera;
+      }
+      function paintStage(camera, drawnScale) {
+        if (stageSize !== drawnScale) {
+          svg.style.width = viewBox.width * drawnScale + 'px';
+          svg.style.height = viewBox.height * drawnScale + 'px';
+          stageSize = drawnScale;
+        }
+        var ratio = camera.scale / drawnScale;
+        svg.style.transform = 'translate(' + camera.x + 'px,' + camera.y + 'px)' + (Math.abs(ratio - 1) > 1e-6 ? ' scale(' + ratio + ')' : '');
+      }
+      function applyStage() {
+        clampStage(state);
+        paintStage(state, state.scale);
+        svg.setAttribute('data-view-scale', String(state.scale));
+        renderControls();
+        outBtn.disabled = state.scale <= minimumZoom;
+        inBtn.disabled = state.scale >= maximumZoom;
+        container.classList.add('is-pannable');
+        if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        if (Archify.readerLayout && typeof Archify.readerLayout.syncLegend === 'function') Archify.readerLayout.syncLegend();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
+          Archify.viewerChromeLayout.schedule();
+        }
+      }
+      function stageTarget(logicalX, logicalY, scale) {
+        var box = stageBox();
+        var k = Math.max(minimumZoom, Math.min(maximumZoom, scale));
+        return clampStage({
+          scale: k,
+          x: box.width / 2 - (logicalX - viewBox.x) * k,
+          y: box.height / 2 - (logicalY - viewBox.y) * k,
+          mode: 'manual'
+        });
+      }
+      function glideStage(target, options) {
+        options = options || {};
+        stopCameraMotion('replaced', false);
+        cancelAnimationFrame(stageGlide);
+        var transaction = cameraReceipt(target, options);
+        cameraTransaction = transaction;
+        var finish = function (outcome) {
+          state = { scale: target.scale, x: target.x, y: target.y, mode: target.mode };
+          applyStage();
+          if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();
+          finishCameraTransaction(transaction, outcome);
+        };
+        if (options.instant === true || reducedMotion() || document.hidden) {
+          finish(reducedMotion() ? 'reduced-motion' : (document.hidden ? 'hidden' : 'complete'));
+          return transaction;
+        }
+        var start = { scale: state.scale, x: state.x, y: state.y };
+        var drawn = stageSize || state.scale;
+        var duration = Math.max(180, Math.min(520, Number(options.duration) || 420));
+        var startedAt = 0;
+        var step = function (timestamp) {
+          if (cameraTransaction !== transaction || transaction.settled) return;
+          if (!startedAt) startedAt = timestamp;
+          var t = Math.max(0, Math.min(1, (timestamp - startedAt) / duration));
+          var eased = 1 - Math.pow(1 - t, 3);
+          state = {
+            scale: start.scale + (target.scale - start.scale) * eased,
+            x: start.x + (target.x - start.x) * eased,
+            y: start.y + (target.y - start.y) * eased,
+            mode: target.mode
+          };
+          paintStage(state, drawn);
+          if (t < 1) { stageGlide = requestAnimationFrame(step); transaction.frame = stageGlide; }
+          else finish('complete');
+        };
+        stageGlide = requestAnimationFrame(step);
+        transaction.frame = stageGlide;
+        return transaction;
+      }
+      function frameStage(ids, options) {
+        options = options || {};
+        var boxes = boxesFor(ids, options.includeNeighbors === true);
+        if (!boxes.length || !viewBox) return false;
+        var minX = Math.min.apply(Math, boxes.map(function (box) { return box.x; }));
+        var minY = Math.min.apply(Math, boxes.map(function (box) { return box.y; }));
+        var maxX = Math.max.apply(Math, boxes.map(function (box) { return box.x + box.width; }));
+        var maxY = Math.max.apply(Math, boxes.map(function (box) { return box.y + box.height; }));
+        var box = stageBox();
+        var padding = options.padding || 48;
+        var fit = Math.min((box.width - padding * 2) / Math.max(1, maxX - minX), (box.height - padding * 2) / Math.max(1, maxY - minY));
+        var scale = Math.max(0.5, Math.min(options.maxScale || 1.6, fit));
+        var target = stageTarget((minX + maxX) / 2, (minY + maxY) / 2, scale);
+        target.mode = 'semantic';
+        return glideStage(target, options);
+      }
+      function wheelStage(event) {
+        if (event.target.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens')) return;
+        event.preventDefault();
+        var unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stageBox().height : 1;
+        interruptCamera();
+        if (event.ctrlKey || event.metaKey) {
+          // Zoom around the pointer, keeping the point under it in place.
+          var box = container.getBoundingClientRect();
+          var screenX = event.clientX - box.left - container.clientLeft - stageInset.left;
+          var screenY = event.clientY - box.top - container.clientTop - stageInset.top;
+          var atX = (screenX - state.x) / state.scale;
+          var atY = (screenY - state.y) / state.scale;
+          var next = Math.max(minimumZoom, Math.min(maximumZoom, state.scale * Math.exp(-event.deltaY * unit * 0.002)));
+          state.scale = next;
+          state.x = screenX - atX * next;
+          state.y = screenY - atY * next;
+        } else {
+          var dx = event.deltaX;
+          var dy = event.deltaY;
+          if (event.shiftKey && !dx) { dx = dy; dy = 0; }
+          state.x -= dx * unit;
+          state.y -= dy * unit;
+        }
+        if (!panFrame) panFrame = requestAnimationFrame(function () { panFrame = 0; apply(); });
+      }
+
       function clamp() {
         var width = svg.clientWidth || 1;
         var height = svg.clientHeight || 1;
@@ -12039,6 +12345,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function logicalViewport() {
+        if (stage) {
+          var box = stageBox();
+          return {
+            x: viewBox.x - state.x / state.scale,
+            y: viewBox.y - state.y / state.scale,
+            width: box.width / state.scale,
+            height: box.height / state.scale,
+            scale: state.scale
+          };
+        }
         var metrics = contentMetrics();
         if (!metrics) return null;
         var camera = sampleRenderedState();
@@ -12138,6 +12454,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           (!window.matchMedia || !window.matchMedia('print').matches);
       }
       function syncPageFlow(camera) {
+        if (stage) return;
         camera = camera || state;
         var height = svg.clientHeight;
         var ordinary = ordinaryPage();
@@ -12172,6 +12489,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         sample();
       }
       function apply() {
+        if (stage) return applyStage();
         clamp();
         svg.style.transform = 'translate(' + state.x + 'px,' + state.y + 'px) scale(' + state.scale + ')';
         svg.setAttribute('data-view-scale', String(state.scale));
@@ -12194,7 +12512,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (values.length !== 6 || !values.every(Number.isFinite)) {
           return { scale: state.scale, x: state.x, y: state.y, mode: state.mode };
         }
-        return { scale: values[0], x: values[4], y: values[5], mode: state.mode };
+        return { scale: (stage ? (stageSize || 1) : 1) * values[0], x: values[4], y: values[5], mode: state.mode };
       }
       function finishCameraTransaction(transaction, outcome) {
         if (!transaction || transaction.settled) return false;
@@ -12275,6 +12593,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var previous = state.scale;
         next = Math.max(minimumZoom, Math.min(maximumZoom, Math.round(next * 4) / 4));
         if (next === previous) return;
+        if (stage) {
+          var centre = stageBox();
+          var centreX = (centre.width / 2 - state.x) / previous;
+          var centreY = (centre.height / 2 - state.y) / previous;
+          state.scale = next;
+          state.x = centre.width / 2 - centreX * next;
+          state.y = centre.height / 2 - centreY * next;
+          apply();
+          return;
+        }
         var longDiagram = svg.clientHeight > window.innerHeight && Math.min(previous, next) < 1;
         var before = longDiagram ? svg.getBoundingClientRect() : null;
         var anchorY = before ? Math.max(0, Math.min(window.innerHeight, before.bottom) + Math.max(0, before.top)) / 2 : 0;
@@ -12303,6 +12631,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
       }
+      // A stage diagram reports new bounds after it reflows.
+      function refresh() {
+        if (stage) apply();
+      }
       function scrollLongDiagramTo(contentY, metrics, options) {
         if (!ordinaryPage() || metrics.height <= window.innerHeight) return;
         // apply() may still be animating its CSS transform. Recover the layout
@@ -12320,6 +12652,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         logicalY = Number(logicalY);
         var metrics = contentMetrics();
         if (!metrics || !Number.isFinite(logicalX) || !Number.isFinite(logicalY)) return false;
+        if (stage) {
+          var requested = Number(options.scale);
+          var target = stageTarget(logicalX, logicalY, Number.isFinite(requested) ? requested : state.scale);
+          glideStage(target, { instant: options.instant === true || options.glide !== true, reason: options.reason });
+          return true;
+        }
         interruptCamera();
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram')) {
           state.scale = 1;
@@ -12479,6 +12817,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function reveal(ids, options) {
         options = options || {};
+        if (stage) return frameStage(ids, options);
         if (window.innerWidth > 720) return frameDesktop(ids, options);
         stopCameraMotion('replaced', false);
         state.scale = 1;
@@ -12533,6 +12872,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         pinnedControls.forEach(function (el) { el.style.setProperty('--archify-scroll-x', offset); });
       }
       function onScroll() {
+        // A stage never scrolls: focus may still scroll the clipped box to
+        // reveal an element, so fold that into the camera instead.
+        if (stage && (container.scrollLeft || container.scrollTop)) {
+          state.x -= container.scrollLeft;
+          state.y -= container.scrollTop;
+          container.scrollLeft = 0;
+          container.scrollTop = 0;
+          apply();
+          return;
+        }
         pinControls();
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram') && Date.now() > autoScrollUntil) {
@@ -12556,7 +12905,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       outBtn.addEventListener('click', function () { zoom(state.scale - 0.25); });
       resetBtn.addEventListener('click', reset);
       container.addEventListener('pointerdown', function (event) {
-        if (state.scale <= 1 || event.button !== 0 || event.target.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') || event.target.closest('[data-node-id]') || event.target.closest('[data-relationship-hit-key]')) return;
+        if ((!stage && state.scale <= 1) || event.button !== 0 || event.target.closest('.diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens') || event.target.closest('[data-node-id]') || event.target.closest('[data-relationship-hit-key]')) return;
         interruptCamera();
         drag = { startX: event.clientX, startY: event.clientY, x: state.x, y: state.y, moved: false };
         container.classList.add('is-panning');
@@ -12575,10 +12924,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       container.addEventListener('pointerup', onPointerEnd);
       container.addEventListener('pointercancel', onPointerEnd);
       container.addEventListener('scroll', onScroll, { passive: true });
+      if (stage) container.addEventListener('wheel', wheelStage, { passive: false });
       window.addEventListener('resize', function () {
         if (resizeFrame) cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(function () {
           resizeFrame = 0;
+          if (stage) fitStage();
           if (state.mode === 'semantic') syncSemantic();
           else apply();
         });
@@ -12598,6 +12949,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var printMedia = window.matchMedia && window.matchMedia('print');
       if (printMedia && printMedia.addEventListener) printMedia.addEventListener('change', function () { syncPageFlow(sampleRenderedState()); });
       window.addEventListener('hashchange', function () { requestAnimationFrame(syncSemantic); });
+      if (stage) {
+        container.setAttribute('data-camera-stage', '');
+        fitStage();
+        // Cards, rails and fonts settle after load; refit when the page does.
+        if (typeof ResizeObserver === 'function') {
+          new ResizeObserver(function () {
+            var before = container.offsetHeight;
+            fitStage();
+            if (container.offsetHeight !== before) apply();
+          }).observe(document.body);
+        }
+      }
       apply();
       pinControls();
       requestAnimationFrame(syncSemantic);
@@ -12609,6 +12972,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         reveal: reveal,
         centerAt: centerAt,
         logicalViewport: logicalViewport,
+        refresh: refresh,
+        stage: stage,
         sync: syncSemantic,
         state: function () { return { scale: state.scale, x: state.x, y: state.y, mode: state.mode }; }
       };
@@ -12670,9 +13035,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         mapSvg.setAttribute('viewBox', [viewBox.x, viewBox.y, viewBox.width, viewBox.height].join(' '));
         nodeLayer.textContent = '';
         nodes = [];
-        Array.prototype.forEach.call(diagram.querySelectorAll('[data-node-id]'), function (node) {
+        // Measure every node before inserting any rect: interleaving the two
+        // forces a layout per node, which stalls large diagrams.
+        var measured = Array.prototype.map.call(diagram.querySelectorAll('[data-node-id]'), function (node) {
           var box;
           try { box = node.getBBox(); } catch (_) { box = null; }
+          return { node: node, box: box };
+        });
+        var layer = document.createDocumentFragment();
+        measured.forEach(function (entry) {
+          var node = entry.node;
+          var box = entry.box;
           if (!box || box.width <= 0 || box.height <= 0) return;
           var id = node.getAttribute('data-node-id');
           var rect = document.createElementNS(namespace, 'rect');
@@ -12687,9 +13060,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           rect.setAttribute('tabindex', '0');
           rect.setAttribute('role', 'button');
           rect.setAttribute('aria-label', viewerText('viewer.radar.focus', { label: nodeLabel(node, id) }));
-          nodeLayer.appendChild(rect);
+          layer.appendChild(rect);
           nodes.push({ id: id, node: node, rect: rect });
         });
+        nodeLayer.appendChild(layer);
         status.textContent = viewerText('viewer.radar.fullMap', { count: nodes.length });
         return true;
       }
@@ -13356,19 +13730,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return types.find(function (type) { return node.querySelector('.c-' + type); }) || 'node';
       }
 
-      function connectionsFor(id) {
-        var count = 0;
-        var seen = {};
+      // Count each node's distinct connections in one pass over the edges;
+      // asking every node to scan every edge stalls large diagrams.
+      var connectionCounts = Object.create(null);
+      (function () {
+        var seen = Object.create(null);
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           var key = from + '\u0000' + to;
-          if ((from === id || to === id) && !seen[key]) {
-            seen[key] = true;
-            count += 1;
-          }
+          if (seen[key]) return;
+          seen[key] = true;
+          connectionCounts[from] = (connectionCounts[from] || 0) + 1;
+          if (to !== from) connectionCounts[to] = (connectionCounts[to] || 0) + 1;
         });
-        return count;
+      })();
+      function connectionsFor(id) {
+        return connectionCounts[id] || 0;
       }
 
       var items = Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {

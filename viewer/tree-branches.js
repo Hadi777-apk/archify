@@ -53,6 +53,26 @@
          With every branch open the positions are exactly the authored ones. */
       var mindmap = svg.getAttribute('data-tree-style') === 'mindmap' ? buildMindmap() : null;
       var motionFrame = 0;
+      // The open part of the map, from the canvas origin to its far margin.
+      // A stage camera holds its view to these bounds.
+      var openBounds = null;
+
+      function boundsOf(pos) {
+        var gap = mindmap.gap;
+        var right = 0;
+        var bottom = 0;
+        Object.keys(pos).forEach(function (id) {
+          var item = mindmap.items[id];
+          right = Math.max(right, pos[id].x + item.w + (item.children.length ? gap.toggle + gap.r * 2 : 0));
+          bottom = Math.max(bottom, pos[id].y + item.h);
+        });
+        return { x0: 0, y0: 0, x1: right + gap.margin, y1: bottom + gap.margin };
+      }
+
+      function setBounds(bounds) {
+        openBounds = bounds;
+        if (Archify.view && typeof Archify.view.refresh === 'function') Archify.view.refresh();
+      }
 
       function buildMindmap() {
         var values = (svg.getAttribute('data-tree-mindmap') || '').split(' ').map(Number);
@@ -184,6 +204,7 @@
         options = options || {};
         var pos = mindmapLayout();
         var moves = [];
+        var settledBounds = boundsOf(pos);
         mindmap.order.forEach(function (item) {
           var to = pos[item.id];
           if (to) {
@@ -210,19 +231,30 @@
             var to = shape.closest('[data-relationship-hit-key]').getAttribute('data-relationship-to');
             (rails[to] = rails[to] || []).push(shape);
           });
+          var traced = [];
+          var folded = [];
           moves.forEach(function (move) {
             move.item.cur = move.to;
             draw(move.item, true);
             if (move.item.edge) {
               (rails[move.item.id] || []).forEach(function (shape) { shape.setAttribute('d', move.item.edge.getAttribute('d')); });
-              // Live motion draws its flow layers along each link; they follow it too.
-              if (Archify.motionGovernor && typeof Archify.motionGovernor.retrace === 'function') Archify.motionGovernor.retrace(move.item.edge);
+              (move.leaving ? folded : traced).push(move.item.edge);
             }
             [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.removeAttribute('data-tree-leaving'); });
           });
+          // Live motion draws its flow layers along the links; they follow in
+          // one batch. Hidden links only carry their path until they open.
+          if ((traced.length || folded.length) && Archify.motionGovernor && typeof Archify.motionGovernor.retrace === 'function') Archify.motionGovernor.retrace(traced, folded);
+          setBounds(settledBounds);
           if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();
         };
         if (instant) { settle(); return pos; }
+        setBounds(openBounds ? {
+          x0: 0,
+          y0: 0,
+          x1: Math.max(openBounds.x1, settledBounds.x1),
+          y1: Math.max(openBounds.y1, settledBounds.y1)
+        } : settledBounds);
         moves.forEach(function (move) {
           if (move.leaving) [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.setAttribute('data-tree-leaving', ''); });
         });
@@ -360,6 +392,7 @@
       return {
         active: true,
         mindmap: Boolean(mindmap),
+        bounds: function () { return openBounds ? { x0: openBounds.x0, y0: openBounds.y0, x1: openBounds.x1, y1: openBounds.y1 } : null; },
         toggle: toggle,
         collapse: function (id) { return setCollapsed(id, true); },
         expand: function (id) { return setCollapsed(id, false); },
