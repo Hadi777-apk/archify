@@ -15,6 +15,7 @@
       var cameraGeneration = 0;
       var cameraTransaction = null;
       var glideTimer = null;
+      var panFrame = 0;
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
@@ -537,8 +538,18 @@
         if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });
         return false;
       }
+      // The offset is set on each pinned control, never on the container: an
+      // inherited custom property there would restyle every SVG element on
+      // every scroll event, which stalls large diagrams.
+      var pinnedControls = null;
       function pinControls() {
-        container.style.setProperty('--archify-scroll-x', container.scrollLeft + 'px');
+        if (!pinnedControls) {
+          pinnedControls = Array.prototype.slice.call(container.querySelectorAll(
+            '.diagram-nav, .overview-map, .focus-chip, .route-probe, .semantic-lens, .diagram-guide, .node-finder'
+          )).filter(function (el) { return el.parentElement === container; });
+        }
+        var offset = container.scrollLeft + 'px';
+        pinnedControls.forEach(function (el) { el.style.setProperty('--archify-scroll-x', offset); });
       }
       function onScroll() {
         pinControls();
@@ -551,6 +562,7 @@
         if (!drag) return;
         var moved = drag.moved;
         drag = null;
+        if (panFrame) { cancelAnimationFrame(panFrame); panFrame = 0; apply(); }
         container.classList.remove('is-panning');
         try { container.releasePointerCapture(event.pointerId); } catch (_) {}
         if (moved) {
@@ -576,7 +588,8 @@
         if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
         state.x = drag.x + dx;
         state.y = drag.y + dy;
-        apply();
+        // Pointer events can outpace frames; move the camera once per frame.
+        if (!panFrame) panFrame = requestAnimationFrame(function () { panFrame = 0; apply(); });
       });
       container.addEventListener('pointerup', onPointerEnd);
       container.addEventListener('pointercancel', onPointerEnd);

@@ -16131,8 +16131,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (next === lift) return;
         lift = next;
-        if (lift) container.style.setProperty(&#39;--archify-dock-lift&#39;, lift + &#39;px&#39;);
-        else container.style.removeProperty(&#39;--archify-dock-lift&#39;);
+        // Only the dock reads the lift. Set on the container, the inherited
+        // property would restyle every SVG element on every scroll frame.
+        if (lift) nav.style.setProperty(&#39;--archify-dock-lift&#39;, lift + &#39;px&#39;);
+        else if (nav) nav.style.removeProperty(&#39;--archify-dock-lift&#39;);
       }
       function scheduleLift() {
         if (!liftFrame) liftFrame = requestAnimationFrame(updateLift);
@@ -16380,6 +16382,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var cameraGeneration = 0;
       var cameraTransaction = null;
       var glideTimer = null;
+      var panFrame = 0;
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
@@ -16902,8 +16905,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Array.isArray(active) &amp;&amp; active.length) return reveal(active, { reason: &#39;selection-sync&#39; });
         return false;
       }
+      // The offset is set on each pinned control, never on the container: an
+      // inherited custom property there would restyle every SVG element on
+      // every scroll event, which stalls large diagrams.
+      var pinnedControls = null;
       function pinControls() {
-        container.style.setProperty(&#39;--archify-scroll-x&#39;, container.scrollLeft + &#39;px&#39;);
+        if (!pinnedControls) {
+          pinnedControls = Array.prototype.slice.call(container.querySelectorAll(
+            &#39;.diagram-nav, .overview-map, .focus-chip, .route-probe, .semantic-lens, .diagram-guide, .node-finder&#39;
+          )).filter(function (el) { return el.parentElement === container; });
+        }
+        var offset = container.scrollLeft + &#39;px&#39;;
+        pinnedControls.forEach(function (el) { el.style.setProperty(&#39;--archify-scroll-x&#39;, offset); });
       }
       function onScroll() {
         pinControls();
@@ -16916,6 +16929,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!drag) return;
         var moved = drag.moved;
         drag = null;
+        if (panFrame) { cancelAnimationFrame(panFrame); panFrame = 0; apply(); }
         container.classList.remove(&#39;is-panning&#39;);
         try { container.releasePointerCapture(event.pointerId); } catch (_) {}
         if (moved) {
@@ -16941,7 +16955,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Math.abs(dx) + Math.abs(dy) &gt; 3) drag.moved = true;
         state.x = drag.x + dx;
         state.y = drag.y + dy;
-        apply();
+        // Pointer events can outpace frames; move the camera once per frame.
+        if (!panFrame) panFrame = requestAnimationFrame(function () { panFrame = 0; apply(); });
       });
       container.addEventListener(&#39;pointerup&#39;, onPointerEnd);
       container.addEventListener(&#39;pointercancel&#39;, onPointerEnd);
@@ -31580,8 +31595,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (next === lift) return;
         lift = next;
-        if (lift) container.style.setProperty(&#39;--archify-dock-lift&#39;, lift + &#39;px&#39;);
-        else container.style.removeProperty(&#39;--archify-dock-lift&#39;);
+        // Only the dock reads the lift. Set on the container, the inherited
+        // property would restyle every SVG element on every scroll frame.
+        if (lift) nav.style.setProperty(&#39;--archify-dock-lift&#39;, lift + &#39;px&#39;);
+        else if (nav) nav.style.removeProperty(&#39;--archify-dock-lift&#39;);
       }
       function scheduleLift() {
         if (!liftFrame) liftFrame = requestAnimationFrame(updateLift);
@@ -31829,6 +31846,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var cameraGeneration = 0;
       var cameraTransaction = null;
       var glideTimer = null;
+      var panFrame = 0;
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
@@ -32351,8 +32369,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Array.isArray(active) &amp;&amp; active.length) return reveal(active, { reason: &#39;selection-sync&#39; });
         return false;
       }
+      // The offset is set on each pinned control, never on the container: an
+      // inherited custom property there would restyle every SVG element on
+      // every scroll event, which stalls large diagrams.
+      var pinnedControls = null;
       function pinControls() {
-        container.style.setProperty(&#39;--archify-scroll-x&#39;, container.scrollLeft + &#39;px&#39;);
+        if (!pinnedControls) {
+          pinnedControls = Array.prototype.slice.call(container.querySelectorAll(
+            &#39;.diagram-nav, .overview-map, .focus-chip, .route-probe, .semantic-lens, .diagram-guide, .node-finder&#39;
+          )).filter(function (el) { return el.parentElement === container; });
+        }
+        var offset = container.scrollLeft + &#39;px&#39;;
+        pinnedControls.forEach(function (el) { el.style.setProperty(&#39;--archify-scroll-x&#39;, offset); });
       }
       function onScroll() {
         pinControls();
@@ -32365,6 +32393,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!drag) return;
         var moved = drag.moved;
         drag = null;
+        if (panFrame) { cancelAnimationFrame(panFrame); panFrame = 0; apply(); }
         container.classList.remove(&#39;is-panning&#39;);
         try { container.releasePointerCapture(event.pointerId); } catch (_) {}
         if (moved) {
@@ -32390,7 +32419,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Math.abs(dx) + Math.abs(dy) &gt; 3) drag.moved = true;
         state.x = drag.x + dx;
         state.y = drag.y + dy;
-        apply();
+        // Pointer events can outpace frames; move the camera once per frame.
+        if (!panFrame) panFrame = requestAnimationFrame(function () { panFrame = 0; apply(); });
       });
       container.addEventListener(&#39;pointerup&#39;, onPointerEnd);
       container.addEventListener(&#39;pointercancel&#39;, onPointerEnd);

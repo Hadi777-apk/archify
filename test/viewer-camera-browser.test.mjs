@@ -158,7 +158,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
           svg.style.clipPath, container.scrollLeft, container.getAttribute('data-camera-transaction'),
           container.style.getPropertyValue('--archify-nav-reserve'), rect.x, rect.y, rect.width, rect.height,
           scrollY, document.documentElement.scrollHeight, box.top, box.bottom, nav.top, nav.bottom,
-          container.style.getPropertyValue('--archify-dock-lift')]);
+          container.querySelector('.diagram-nav').style.getPropertyValue('--archify-dock-lift')]);
         equal = current === previous ? equal + 1 : 0;
         previous = current;
         return equal >= 8 && !container.hasAttribute('data-camera-transaction');
@@ -380,7 +380,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
             cameraDockTrace.push({ time: performance.now(), scale: Archify.view.state().scale,
               paintedScale: s.getBoundingClientRect().height / s.clientHeight, scrollY,
               pageHeight: document.documentElement.scrollHeight, containerTop: b.top, containerBottom: b.bottom,
-              navTop: n.top, navBottom: n.bottom, lift: c.style.getPropertyValue('--archify-dock-lift'),
+              navTop: n.top, navBottom: n.bottom, lift: c.querySelector('.diagram-nav').style.getPropertyValue('--archify-dock-lift'),
               height: c.style.height });
             requestAnimationFrame(frame);
           }
@@ -399,7 +399,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
             pageHeight: document.documentElement.scrollHeight, containerTop: b.top, containerBottom: b.bottom,
             containerHeight: b.height, baseSvgHeight: s.clientHeight,
             ratio: s.viewBox.baseVal.width / s.viewBox.baseVal.height,
-            lift: c.style.getPropertyValue('--archify-dock-lift'), flowHeight: c.style.height,
+            lift: c.querySelector('.diagram-nav').style.getPropertyValue('--archify-dock-lift'), flowHeight: c.style.height,
             reserve: c.style.getPropertyValue('--archify-nav-reserve'),
             trajectory: cameraDockTrace };
         })()`);

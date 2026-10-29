@@ -162,8 +162,10 @@
         }
         if (next === lift) return;
         lift = next;
-        if (lift) container.style.setProperty('--archify-dock-lift', lift + 'px');
-        else container.style.removeProperty('--archify-dock-lift');
+        // Only the dock reads the lift. Set on the container, the inherited
+        // property would restyle every SVG element on every scroll frame.
+        if (lift) nav.style.setProperty('--archify-dock-lift', lift + 'px');
+        else if (nav) nav.style.removeProperty('--archify-dock-lift');
       }
       function scheduleLift() {
         if (!liftFrame) liftFrame = requestAnimationFrame(updateLift);
