@@ -26,10 +26,33 @@ const { diagram: tree, template, outPath, sourceEvidence } = loadDiagram({
   argv: cliArgs,
 });
 const locale = tree.meta.locale;
-const direction = tree.layout?.direction === 'right' ? 'right' : 'down';
+// A mind map (the default) grows rightward from the root and reflows in the
+// Viewer as branches open; the classic style is the fixed elbow tree.
+const style = tree.layout?.style === 'classic' ? 'classic' : 'mindmap';
+const mindmap = style === 'mindmap';
+const direction = mindmap || tree.layout?.direction === 'right' ? 'right' : 'down';
 const down = direction === 'down';
 
-const layout = {
+const layout = mindmap ? {
+  margin: 32,
+  top: 64,
+  // Generation gap (beside each toggle) and the gap between stacked rows.
+  gapX: tree.layout?.gapX ?? 104,
+  gapY: tree.layout?.gapY ?? 26,
+  // Extra room around a sibling whose children show, so branch groups read apart.
+  groupGap: 44,
+  toggleGap: 10,
+  nodeW: tree.layout?.nodeW ?? 72,
+  nodeMaxW: tree.layout?.nodeMaxW ?? 260,
+  padX: 20,
+  padY: 13,
+  labelFont: 14,
+  labelLine: 19,
+  sublabelFont: 11,
+  sublabelLine: 14,
+  rootLabelFont: 15,
+  toggleR: 11,
+} : {
   margin: 32,
   top: 64,
   // Sibling gap and generation gap. A downward tree needs room under each
@@ -201,11 +224,13 @@ const measured = new Map(asArray(tree.nodes).map((node) => {
   const longestWord = Math.max(...String(node.label).split(/\s+/).map((word) => textUnits(word) * labelAdvance));
   const floor = Math.max(layout.nodeW, Math.ceil(longestWord + layout.padX * 2 + 2));
   const cap = Math.ceil(Math.min(layout.nodeMaxW * 1.5, Math.max(floor, layout.nodeMaxW)));
+  // A mind-map node shows its label only; the sublabel stays in its passport.
+  const sublabel = mindmap ? '' : node.sublabel;
   const linesAt = (width) => ({
     label: wrapText(node.label, labelFont * 1.06, width - layout.padX * 2),
-    sublabel: node.sublabel ? wrapText(node.sublabel, layout.sublabelFont, width - layout.padX * 2) : [],
+    sublabel: sublabel ? wrapText(sublabel, layout.sublabelFont, width - layout.padX * 2) : [],
   });
-  const natural = Math.ceil(Math.max(textUnits(node.label) * labelAdvance, node.sublabel ? textUnits(node.sublabel) * layout.sublabelFont * ADVANCE : 0) + layout.padX * 2 + 2);
+  const natural = Math.ceil(Math.max(textUnits(node.label) * labelAdvance, sublabel ? textUnits(sublabel) * layout.sublabelFont * ADVANCE : 0) + layout.padX * 2 + 2);
   // A stacked list shares one width anyway, so its entries are not balanced.
   const stacked = stackOf.has(node.id);
   let width = Math.min(cap, Math.max(floor, natural));
@@ -258,8 +283,9 @@ bandSize.reduce((offset, size, depth) => {
 
 // Nodes of one generation share their band's size along the depth axis (the
 // same height going down, the same width going right), so a generation reads
-// as one even row or column instead of a ragged one.
-for (const [id, node] of measured) {
+// as one even row or column instead of a ragged one. Mind-map nodes keep
+// their own width, like pills of text.
+if (!mindmap) for (const [id, node] of measured) {
   if (node.stacked) continue;
   measured.set(id, down ? { ...node, height: bandSize[node.depth] } : { ...node, width: bandSize[node.depth] });
 }
@@ -276,7 +302,8 @@ const placed = new Map();
 // Where a group meets its parent's crossbar: a single child at its centre, a
 // stacked run at its spine.
 const attachOf = (group) => (group.stack ? group.spine : centerOf(group.single));
-(function place(id, start) {
+if (mindmap) placeMindmap();
+else (function place(id, start) {
   const node = measured.get(id);
   const groups = groupsOf.get(id);
   // A parent whose only children are one stacked run sits at the run's left
@@ -315,9 +342,61 @@ function centerOf(id) {
   return down ? node.x + node.width / 2 : node.y + node.height / 2;
 }
 
+// Mind map: one column per generation, as wide as its widest node, so every
+// link into a column has the same reach. Leaves stack top to bottom in
+// authored order and a parent sits midway between its first and last child.
+// viewer/tree-branches.js repeats exactly this pass over the visible nodes
+// whenever a branch opens or closes; with every branch open it reproduces
+// these positions, so the SVG and export always hold the complete tree.
+function placeMindmap() {
+  const columnWidth = [];
+  for (const node of measured.values()) columnWidth[node.depth] = Math.max(columnWidth[node.depth] || 0, node.width);
+  const columnX = [layout.margin];
+  for (let depth = 1; depth < columnWidth.length; depth += 1) {
+    columnX[depth] = columnX[depth - 1] + columnWidth[depth - 1] + layout.toggleGap + layout.toggleR * 2 + layout.gapX;
+  }
+  const open = (id) => childrenOf.get(id).length > 0;
+  let cursor = layout.top;
+  (function place(id) {
+    const node = measured.get(id);
+    const children = childrenOf.get(id);
+    let center;
+    if (children.length) {
+      const centers = children.map((child, index) => {
+        if (index && (open(child) || open(children[index - 1]))) cursor += layout.groupGap;
+        return place(child);
+      });
+      center = (centers[0] + centers.at(-1)) / 2;
+    } else {
+      center = cursor + node.height / 2;
+      cursor += node.height + layout.gapY;
+    }
+    placed.set(id, { ...node, x: Math.round(columnX[node.depth]), y: Math.round(center - node.height / 2), toggleAt: null });
+    return center;
+  }(authoredRoot.id));
+  // A tall parent over a short first child may rise above the first row.
+  const shift = Math.max(0, layout.margin - Math.min(...[...placed.values()].map((node) => node.y)));
+  if (shift) for (const [id, node] of placed) placed.set(id, { ...node, y: node.y + shift });
+}
+
+// A mind-map link leaves through the toggle on the node's right edge and
+// curves into the child's left edge.
+function mindmapToggleAt(node) {
+  return [node.x + node.width + layout.toggleGap + layout.toggleR, node.y + node.height / 2];
+}
+function mindmapEdge(parent, child) {
+  const [tx, sy] = mindmapToggleAt(parent);
+  const [ex, ey] = [child.x, child.y + child.height / 2];
+  const reach = (ex - tx) / 2;
+  return {
+    points: [[parent.x + parent.width, sy], [tx, sy], [ex, ey]],
+    d: `M ${parent.x + parent.width} ${sy} H ${tx} C ${tx + reach} ${sy} ${ex - reach} ${ey} ${ex} ${ey}`,
+  };
+}
+
 const all = asArray(tree.nodes).map((node) => placed.get(node.id));
 const viewBox = Array.isArray(tree.meta?.viewBox) ? tree.meta.viewBox : [
-  Math.max(320, Math.ceil(Math.max(...all.map((node) => node.x + node.width)) + layout.margin + (down ? 0 : layout.toggleR + 4))),
+  Math.max(320, Math.ceil(Math.max(...all.map((node) => node.x + node.width)) + layout.margin + (mindmap ? layout.toggleGap + layout.toggleR * 2 : down ? 0 : layout.toggleR + 4))),
   Math.max(240, Math.ceil(Math.max(...all.map((node) => node.y + node.height)) + layout.margin + (down ? layout.toggleR + 4 : 0))),
 ];
 
@@ -363,7 +442,7 @@ const edges = all.filter((node) => node.parent !== undefined).map((node, index) 
   from: node.parent,
   to: node.id,
   index,
-  points: edgePoints(placed.get(node.parent), node),
+  ...(mindmap ? mindmapEdge(placed.get(node.parent), node) : { points: edgePoints(placed.get(node.parent), node) }),
 }));
 
 function ancestorsOf(id) {
@@ -392,6 +471,7 @@ function descendantCount(id) {
 function buildLayoutReport() {
   return {
     diagram_type: 'tree',
+    style,
     direction,
     viewBox,
     nodes: all.map((node) => ({ id: node.id, parent: node.parent ?? null, depth: node.depth, x: node.x, y: node.y, width: node.width, height: node.height, lines: node.labelLines.length, stacked: node.stacked })),
@@ -418,6 +498,8 @@ childrenOf.get(authoredRoot.id).forEach((id, index) => {
   }(id));
 });
 const hueClass = (id) => (hueOf.has(id) ? `tree-hue-${hueOf.get(id)}` : 'tree-hue-root');
+// A mind map tones by generation instead: root, first ring, second, and deeper.
+const toneClass = (depth) => `tree-tone-${Math.min(depth, 3)}`;
 
 function renderNode(node) {
   const leaf = !childrenOf.get(node.id).length;
@@ -463,11 +545,37 @@ function renderNode(node) {
         </g>`.replace(/[ \t]+$/gm, '');
 }
 
+// A mind-map node is a quiet pill of text, toned by generation. Its drawing
+// sits in one shift group that the Viewer translates when the map reflows, so
+// every module measuring the node (focus, camera, radar) sees where it is.
+function renderMindmapNode(node) {
+  const leaf = !childrenOf.get(node.id).length;
+  const tone = node.isRoot ? 'frontend' : leaf ? 'external' : 'backend';
+  const role = node.isRoot ? 'tree-root' : leaf ? 'tree-leaf' : 'tree-branch';
+  const context = i18nText(locale, node.isRoot ? 'node.context.tree.root' : leaf ? 'node.context.tree.leaf' : 'node.context.tree.branch');
+  const passport = { kind: tone, sublabel: node.sublabel, context };
+  const tx = node.x + layout.padX;
+  let y = node.y + node.evidenceHeader + (node.height - node.evidenceHeader - node.contentHeight) / 2;
+  const label = node.labelLines.map((line) => {
+    y += layout.labelLine;
+    return `<tspan x="${tx}" y="${y - 5}">${esc(line)}</tspan>`;
+  }).join('');
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport, locale)} data-tree-depth="${node.depth}"${treeAttrs(node.id)} class="${hueClass(node.id)} ${toneClass(node.depth)}">
+          ${focusNodeTitle(node.label, passport)}
+          <g data-tree-shift="">
+            <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="c-mask"/>
+            <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="c-${tone} ${role} tree-pill"${animateAttr(tree.meta, 'node', node.depth)} stroke-width="0"/>
+            <text data-node-label="" x="${tx}" class="t-primary tree-label" font-size="${node.labelFont}" font-weight="${node.isRoot ? 600 : 500}" text-anchor="start">${label}</text>
+          </g>
+        </g>`.replace(/[ \t]+$/gm, '');
+}
+
 // The toggle is a separate control after its node, not nested inside it, so a
 // keyboard reader meets "node, then its branch control" and each has one role.
 function renderToggle(node) {
   const children = childrenOf.get(node.id);
   if (!children.length) return '';
+  if (mindmap) return renderMindmapToggle(node);
   const [cx, cy] = edgeStart(node);
   const hidden = descendantCount(node.id);
   const collapse = i18nText(locale, 'tree.toggle.collapse', { label: node.label, count: hidden });
@@ -486,7 +594,28 @@ function renderToggle(node) {
         </g>`.replace(/[ \t]+$/gm, '');
 }
 
+// A mind map opens one generation at a time: below the root every branch
+// starts closed unless its node says `collapsed: false`. The chevron points
+// to where the branch goes: right while closed, back once open.
+function renderMindmapToggle(node) {
+  const [cx, cy] = mindmapToggleAt(node);
+  const hidden = descendantCount(node.id);
+  const collapse = i18nText(locale, 'tree.toggle.collapse', { label: node.label, count: hidden });
+  const expand = i18nText(locale, 'tree.toggle.expand', { label: node.label, count: hidden });
+  const r = layout.toggleR;
+  const startsClosed = node.collapsed ?? node.depth > 0;
+  return `        <g data-tree-toggle="${esc(node.id)}" data-tree-count="${hidden}" data-tree-depth="${node.depth}"${treeAttrs(node.id)}${startsClosed ? ' data-tree-initially-collapsed=""' : ''} data-tree-label-collapse="${esc(collapse)}" data-tree-label-expand="${esc(expand)}" role="button" tabindex="0" aria-expanded="true" aria-label="${esc(collapse)}" class="${hueClass(node.id)} ${toneClass(node.depth)}">
+          <circle cx="${cx}" cy="${cy}" r="${r + 6}" class="tree-toggle-hit"/>
+          <circle cx="${cx}" cy="${cy}" r="${r}" class="tree-toggle-disc" stroke-width="0"/>
+          <path class="tree-toggle-glyph tree-toggle-open" d="M ${cx + 1.75} ${cy - 3.5} L ${cx - 1.75} ${cy} L ${cx + 1.75} ${cy + 3.5}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path class="tree-toggle-glyph tree-toggle-closed" d="M ${cx - 1.75} ${cy - 3.5} L ${cx + 1.75} ${cy} L ${cx - 1.75} ${cy + 3.5}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>`.replace(/[ \t]+$/gm, '');
+}
+
 function renderEdge(edge) {
+  if (mindmap) {
+    return `        <path ${focusEdgeAttrs(edge.from, edge.to, undefined, edge.index)}${treeAttrs(edge.to)} data-tree-depth="${placed.get(edge.from).depth}" data-composition-points="${routePointsValue(edge.points)}" d="${edge.d}" class="a-default tree-edge tree-curve ${toneClass(placed.get(edge.from).depth)}"${animateAttr(tree.meta, 'edge', placed.get(edge.to).depth)} stroke-width="1.6" fill="none"/>`;
+  }
   // Links out of the root share one trunk, so they stay neutral; inside a
   // subtree every link shares its branch's hue.
   const hued = edge.from !== authoredRoot.id;
@@ -497,7 +626,11 @@ function renderEdge(edge) {
 function renderSvg() {
   const readerFit = tree.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
   const expandAll = esc(i18nText(locale, 'tree.expandAll'));
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(tree.meta)} data-tree-ui="" data-tree-direction="${direction}"${readerFit}>
+  // The Viewer reflows a mind map with the same constants the renderer used.
+  const mindmapAttrs = mindmap
+    ? ` data-tree-style="mindmap" data-tree-mindmap="${[layout.top, layout.margin, layout.gapY, layout.groupGap, layout.gapX, layout.toggleGap, layout.toggleR].join(' ')}"`
+    : '';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(tree.meta)} data-tree-ui="" data-tree-direction="${direction}"${mindmapAttrs}${readerFit}>
 ${svgAccessibleText(tree.meta, 'tree')}
 ${renderDefinitions()}
         <style>
@@ -535,7 +668,23 @@ ${['root', ...SUBTREE_HUES].map((hue) => hue === 'root'
           svg[data-tree-ui] [data-tree-expand-all] { cursor: pointer; outline: none; }
           svg[data-tree-ui] [data-tree-expand-all] rect { fill: var(--mask); stroke: var(--lane-stroke); }
           svg[data-tree-ui] [data-tree-expand-all]:is(:hover, :focus-visible) rect { stroke: var(--arrow-emphasis); stroke-width: 2; }
-          svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }
+          svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }${mindmap ? `
+          svg[data-tree-ui] .tree-tone-0 { --tree-pill: color-mix(in srgb, var(--database-stroke) 24%, var(--mask)); --tree-link: color-mix(in srgb, var(--database-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-1 { --tree-pill: color-mix(in srgb, color-mix(in srgb, var(--database-stroke) 40%, var(--frontend-stroke)) 22%, var(--mask)); --tree-link: color-mix(in srgb, color-mix(in srgb, var(--database-stroke) 40%, var(--frontend-stroke)) 60%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-2 { --tree-pill: color-mix(in srgb, var(--backend-stroke) 22%, var(--mask)); --tree-link: color-mix(in srgb, var(--backend-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-3 { --tree-pill: color-mix(in srgb, var(--cloud-stroke) 20%, var(--mask)); --tree-link: color-mix(in srgb, var(--cloud-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-pill { fill: var(--tree-pill); stroke: none; transition: filter 0.15s ease; }
+          svg[data-tree-ui] [data-node-id]:hover .tree-pill { filter: brightness(0.96); }
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-depth="0"] .tree-label { fill: var(--text); }
+          svg[data-tree-ui] .tree-curve { stroke: var(--tree-link); stroke-linecap: round; }
+          svg[data-tree-ui][data-tree-style="mindmap"] .tree-toggle-disc,
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle][aria-expanded="false"] .tree-toggle-disc { fill: var(--tree-pill); stroke: none; }
+          svg[data-tree-ui][data-tree-style="mindmap"] .tree-toggle-glyph,
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle][aria-expanded="false"] .tree-toggle-glyph { stroke: var(--text); }
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle]:is(:hover, :focus-visible) .tree-toggle-disc { stroke: var(--tree-link); stroke-width: 1.5; }
+          svg[data-tree-ui] [data-tree-toggle][aria-expanded="true"] .tree-toggle-closed,
+          svg[data-tree-ui] [data-tree-toggle][aria-expanded="false"] .tree-toggle-open { display: none; }
+          svg[data-tree-ui] [data-tree-hidden][data-tree-leaving] { display: inline; pointer-events: none; }` : ''}
         </style>
 
         <!-- Background Grid -->
@@ -545,7 +694,7 @@ ${['root', ...SUBTREE_HUES].map((hue) => hue === 'root'
 ${edges.map(renderEdge).join('\n')}
 
         <!-- Nodes -->
-${all.map(renderNode).join('\n')}
+${all.map(mindmap ? renderMindmapNode : renderNode).join('\n')}
 
         <!-- Branch toggles -->
 ${all.map(renderToggle).filter(Boolean).join('\n')}

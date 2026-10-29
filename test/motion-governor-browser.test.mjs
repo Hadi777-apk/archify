@@ -160,7 +160,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
           edges:edges.length, flows:flows.length, paths:paths.length, circles:circles.length,
           valid:paths.every(e=>e.getAttribute('d')===(e.previousElementSibling.getAttribute('data-motion-path')||e.previousElementSibling.getAttribute('d')))&&
           circles.every(e=>e.getAttribute('cx')!==null&&e.getAttribute('cy')!==null)&&
-          flows.every(e=>Array.from(e.attributes).every(a=>!a.name.startsWith('data-')||['data-ambient-flow-overlay','data-tree-ancestors'].includes(a.name))&&
+          flows.every(e=>Array.from(e.attributes).every(a=>!a.name.startsWith('data-')||['data-ambient-flow-overlay','data-tree-ancestors','data-tree-hidden'].includes(a.name))&&
           !e.id&&!e.hasAttribute('role')&&!e.hasAttribute('tabindex')&&!e.hasAttribute('marker-end')&&getComputedStyle(e).pointerEvents==='none'),
           originalAnimations:edges.map(e=>getComputedStyle(e).animationName),
           reverse:edges.filter(e=>e.hasAttribute('data-motion-path')&&e.getAttribute('data-motion-path')!==e.getAttribute('d')).length,
@@ -214,8 +214,10 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
       if(mode==='tree') {
         const branch = await run(`(() => {
           const overlaysOf=e=>{const out=[];for(let s=e.nextElementSibling;s&&s.hasAttribute('data-ambient-flow-overlay');s=s.nextElementSibling)out.push(s);return out;};
+          // Only edges this collapse hides; a mind map keeps deeper branches closed.
+          const shown=Array.from(document.querySelectorAll('path[data-animate="edge"]:not([data-tree-hidden])'));
           Archify.treeBranches.collapse('platform');
-          const hidden=Array.from(document.querySelectorAll('path[data-animate="edge"][data-tree-hidden]'));
+          const hidden=shown.filter(e=>e.hasAttribute('data-tree-hidden'));
           const stopped=hidden.every(e=>overlaysOf(e).length>0&&overlaysOf(e).every(o=>getComputedStyle(o).display==='none'&&o.getAnimations().length===0));
           Archify.treeBranches.expand('platform');
           return {count:hidden.length,stopped,resumed:hidden.every(e=>overlaysOf(e).some(o=>o.classList.contains('ambient-flow-wake')&&getComputedStyle(o).display!=='none'))};
@@ -325,6 +327,8 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
         const overlaysOf=e=>{const out=[];for(let s=e.nextElementSibling;s&&s.hasAttribute('data-ambient-flow-overlay');s=s.nextElementSibling)out.push(s);return out;};
         const edges=Array.from(document.querySelectorAll('path[data-animate="edge"]'));
         const unaffected=edges.filter(e=>['payments','operations'].includes(e.getAttribute('data-edge-from')));
+        // A mind map opens one generation at a time; show the neighbouring branches.
+        ['payments','operations'].forEach(id=>Archify.treeBranches.expand(id));
         if (!Archify.treeBranches.collapsedIds().includes('orders')) Archify.treeBranches.collapse('orders');
         const hidden=edges.filter(e=>e.hasAttribute('data-tree-hidden'));
         const stopped=hidden.every(e=>overlaysOf(e).length>0&&overlaysOf(e).every(o=>getComputedStyle(o).display==='none'&&o.getAnimations().length===0));

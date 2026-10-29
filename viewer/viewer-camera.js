@@ -14,6 +14,7 @@
       var cameraFrame = null;
       var cameraGeneration = 0;
       var cameraTransaction = null;
+      var glideTimer = null;
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
@@ -360,6 +361,13 @@
         state.x = metrics.width / 2 - contentX * state.scale;
         state.y = metrics.height / 2 - contentY * state.scale;
         state.mode = 'manual';
+        // A glide takes the slower camera curve, so a move the reader caused
+        // (such as opening a tree branch) reads as one continuous motion.
+        if (options.glide === true && !reducedMotion()) {
+          container.classList.add('is-camera-moving');
+          clearTimeout(glideTimer);
+          glideTimer = setTimeout(function () { container.classList.remove('is-camera-moving'); }, 460);
+        }
         apply();
         scrollLongDiagramTo(contentY, metrics, options);
         if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();

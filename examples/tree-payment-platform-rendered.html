@@ -5204,7 +5204,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1069 396" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-tree-ui="" data-tree-direction="down" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
+      <svg viewBox="0 0 869 603" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-tree-ui="" data-tree-direction="right" data-tree-style="mindmap" data-tree-mindmap="64 32 26 44 104 10 11" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
         <title id="archify-diagram-title">Payment platform capabilities</title>
         <desc id="archify-diagram-description">Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.</desc>
         <!-- Definitions -->
@@ -5265,164 +5265,144 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-tree-ui] [data-tree-expand-all] rect { fill: var(--mask); stroke: var(--lane-stroke); }
           svg[data-tree-ui] [data-tree-expand-all]:is(:hover, :focus-visible) rect { stroke: var(--arrow-emphasis); stroke-width: 2; }
           svg[data-tree-ui]:not([data-tree-any-collapsed]) [data-tree-expand-all] { display: none; }
+          svg[data-tree-ui] .tree-tone-0 { --tree-pill: color-mix(in srgb, var(--database-stroke) 24%, var(--mask)); --tree-link: color-mix(in srgb, var(--database-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-1 { --tree-pill: color-mix(in srgb, color-mix(in srgb, var(--database-stroke) 40%, var(--frontend-stroke)) 22%, var(--mask)); --tree-link: color-mix(in srgb, color-mix(in srgb, var(--database-stroke) 40%, var(--frontend-stroke)) 60%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-2 { --tree-pill: color-mix(in srgb, var(--backend-stroke) 22%, var(--mask)); --tree-link: color-mix(in srgb, var(--backend-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-tone-3 { --tree-pill: color-mix(in srgb, var(--cloud-stroke) 20%, var(--mask)); --tree-link: color-mix(in srgb, var(--cloud-stroke) 58%, var(--mask)); }
+          svg[data-tree-ui] .tree-pill { fill: var(--tree-pill); stroke: none; transition: filter 0.15s ease; }
+          svg[data-tree-ui] [data-node-id]:hover .tree-pill { filter: brightness(0.96); }
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-depth="0"] .tree-label { fill: var(--text); }
+          svg[data-tree-ui] .tree-curve { stroke: var(--tree-link); stroke-linecap: round; }
+          svg[data-tree-ui][data-tree-style="mindmap"] .tree-toggle-disc,
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle][aria-expanded="false"] .tree-toggle-disc { fill: var(--tree-pill); stroke: none; }
+          svg[data-tree-ui][data-tree-style="mindmap"] .tree-toggle-glyph,
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle][aria-expanded="false"] .tree-toggle-glyph { stroke: var(--text); }
+          svg[data-tree-ui][data-tree-style="mindmap"] [data-tree-toggle]:is(:hover, :focus-visible) .tree-toggle-disc { stroke: var(--tree-link); stroke-width: 1.5; }
+          svg[data-tree-ui] [data-tree-toggle][aria-expanded="true"] .tree-toggle-closed,
+          svg[data-tree-ui] [data-tree-toggle][aria-expanded="false"] .tree-toggle-open { display: none; }
+          svg[data-tree-ui] [data-tree-hidden][data-tree-leaving] { display: inline; pointer-events: none; }
         </style>
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Containment links -->
-        <path data-edge-from="platform" data-edge-to="orders" data-edge-key="0" data-tree-ancestors="platform" data-composition-points="523,123;523,151;186,151;186,179" d="M 523 123 L 523 141 Q 523 151 513 151 L 196 151 Q 186 151 186 161 L 186 179" class="a-default tree-edge tree-edge-trunk" data-animate="edge" style="--step:1" stroke-width="1.8"/>
-        <path data-edge-from="platform" data-edge-to="payments" data-edge-key="1" data-tree-ancestors="platform" data-composition-points="523,123;523,179" d="M 523 123 L 523 179" class="a-default tree-edge tree-edge-trunk" data-animate="edge" style="--step:1" stroke-width="1.8"/>
-        <path data-edge-from="platform" data-edge-to="operations" data-edge-key="2" data-tree-ancestors="platform" data-composition-points="523,123;523,151;875,151;875,179" d="M 523 123 L 523 141 Q 523 151 533 151 L 865 151 Q 875 151 875 161 L 875 179" class="a-default tree-edge tree-edge-trunk" data-animate="edge" style="--step:1" stroke-width="1.8"/>
-        <path data-edge-from="orders" data-edge-to="create_order" data-edge-key="3" data-tree-ancestors="orders platform" data-composition-points="186,238;186,266;102,266;102,294" d="M 186 238 L 186 256 Q 186 266 176 266 L 112 266 Q 102 266 102 276 L 102 294" class="a-default tree-edge tree-edge-hued tree-hue-backend" data-animate="edge" style="--step:2" stroke-width="1.5"/>
-        <path data-edge-from="orders" data-edge-to="cancel_order" data-edge-key="4" data-tree-ancestors="orders platform" data-composition-points="186,238;186,266;270,266;270,294" d="M 186 238 L 186 256 Q 186 266 196 266 L 260 266 Q 270 266 270 276 L 270 294" class="a-default tree-edge tree-edge-hued tree-hue-backend" data-animate="edge" style="--step:2" stroke-width="1.5"/>
-        <path data-edge-from="payments" data-edge-to="card_payment" data-edge-key="5" data-tree-ancestors="payments platform" data-composition-points="523,238;523,266;438,266;438,294" d="M 523 238 L 523 256 Q 523 266 513 266 L 448 266 Q 438 266 438 276 L 438 294" class="a-default tree-edge tree-edge-hued tree-hue-database" data-animate="edge" style="--step:2" stroke-width="1.5"/>
-        <path data-edge-from="payments" data-edge-to="wallet_payment" data-edge-key="6" data-tree-ancestors="payments platform" data-composition-points="523,238;523,266;608,266;608,294" d="M 523 238 L 523 256 Q 523 266 533 266 L 598 266 Q 608 266 608 276 L 608 294" class="a-default tree-edge tree-edge-hued tree-hue-database" data-animate="edge" style="--step:2" stroke-width="1.5"/>
-        <path data-edge-from="operations" data-edge-to="refunds" data-edge-key="7" data-tree-ancestors="operations platform" data-composition-points="875,238;875,266;785.5,266;785.5,294" d="M 875 238 L 875 256 Q 875 266 865 266 L 795.5 266 Q 785.5 266 785.5 276 L 785.5 294" class="a-default tree-edge tree-edge-hued tree-hue-cloud" data-animate="edge" style="--step:2" stroke-width="1.5"/>
-        <path data-edge-from="operations" data-edge-to="reconciliation" data-edge-key="8" data-tree-ancestors="operations platform" data-composition-points="875,238;875,266;964,266;964,294" d="M 875 238 L 875 256 Q 875 266 885 266 L 954 266 Q 964 266 964 276 L 964 294" class="a-default tree-edge tree-edge-hued tree-hue-cloud" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="platform" data-edge-to="orders" data-edge-key="0" data-tree-ancestors="platform" data-tree-depth="0" data-composition-points="227,310.5;248,310.5;363,122.5" d="M 227 310.5 H 248 C 305.5 310.5 305.5 122.5 363 122.5" class="a-default tree-edge tree-curve tree-tone-0" data-animate="edge" style="--step:1" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="platform" data-edge-to="payments" data-edge-key="1" data-tree-ancestors="platform" data-tree-depth="0" data-composition-points="227,310.5;248,310.5;363,308.5" d="M 227 310.5 H 248 C 305.5 310.5 305.5 308.5 363 308.5" class="a-default tree-edge tree-curve tree-tone-0" data-animate="edge" style="--step:1" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="platform" data-edge-to="operations" data-edge-key="2" data-tree-ancestors="platform" data-tree-depth="0" data-composition-points="227,310.5;248,310.5;363,498.5" d="M 227 310.5 H 248 C 305.5 310.5 305.5 498.5 363 498.5" class="a-default tree-edge tree-curve tree-tone-0" data-animate="edge" style="--step:1" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="orders" data-edge-to="create_order" data-edge-key="3" data-tree-ancestors="orders platform" data-tree-depth="1" data-composition-points="459,122.5;480,122.5;631,86.5" d="M 459 122.5 H 480 C 555.5 122.5 555.5 86.5 631 86.5" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="orders" data-edge-to="cancel_order" data-edge-key="4" data-tree-ancestors="orders platform" data-tree-depth="1" data-composition-points="459,122.5;480,122.5;631,157.5" d="M 459 122.5 H 480 C 555.5 122.5 555.5 157.5 631 157.5" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="payments" data-edge-to="card_payment" data-edge-key="5" data-tree-ancestors="payments platform" data-tree-depth="1" data-composition-points="477,308.5;498,308.5;631,272.5" d="M 477 308.5 H 498 C 564.5 308.5 564.5 272.5 631 272.5" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="payments" data-edge-to="wallet_payment" data-edge-key="6" data-tree-ancestors="payments platform" data-tree-depth="1" data-composition-points="477,308.5;498,308.5;631,343.5" d="M 477 308.5 H 498 C 564.5 308.5 564.5 343.5 631 343.5" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="operations" data-edge-to="refunds" data-edge-key="7" data-tree-ancestors="operations platform" data-tree-depth="1" data-composition-points="495,498.5;516,498.5;631,458.5" d="M 495 498.5 H 516 C 573.5 498.5 573.5 458.5 631 458.5" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
+        <path data-edge-from="operations" data-edge-to="reconciliation" data-edge-key="8" data-tree-ancestors="operations platform" data-tree-depth="1" data-composition-points="495,498.5;516,498.5;631,539" d="M 495 498.5 H 516 C 573.5 498.5 573.5 539 631 539" class="a-default tree-edge tree-curve tree-tone-1" data-animate="edge" style="--step:2" stroke-width="1.6" fill="none"/>
 
         <!-- Nodes -->
-        <g id="node-platform" data-node-id="platform" data-node-label="Payment platform" tabindex="0" role="button" aria-label="Focus Payment platform, Decomposed by capability, Root" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Decomposed by capability" data-node-context="Root" data-tree-depth="0" class="tree-hue-root">
+        <g id="node-platform" data-node-id="platform" data-node-label="Payment platform" tabindex="0" role="button" aria-label="Focus Payment platform, Decomposed by capability, Root" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Decomposed by capability" data-node-context="Root" data-tree-depth="0" class="tree-hue-root tree-tone-0">
           <title>Payment platform · Decomposed by capability · Root</title>
-          <rect data-tree-stack="" x="434" y="69" width="188" height="59" rx="10" class="tree-stack-frontend" stroke-width="1.2"/>
-          <rect x="429" y="64" width="188" height="59" rx="10" class="c-mask"/>
-          <rect x="429" y="64" width="188" height="59" rx="10" class="c-frontend tree-root" data-animate="node" style="--step:0" stroke-width="0"/>
-
-
-          <text data-node-label="" x="523" class="t-primary tree-label" font-size="14.5" font-weight="750" text-anchor="middle"><tspan x="523" y="88.5">Payment platform</tspan></text>
-          <text data-detail="context" x="523" class="t-muted tree-sublabel" font-size="11" text-anchor="middle"><tspan x="523" y="107.5">Decomposed by capability</tspan></text>
+          <g data-tree-shift="">
+            <rect x="32" y="288" width="195" height="45" rx="8" class="c-mask"/>
+            <rect x="32" y="288" width="195" height="45" rx="8" class="c-frontend tree-root tree-pill" data-animate="node" style="--step:0" stroke-width="0"/>
+            <text data-node-label="" x="52" class="t-primary tree-label" font-size="15" font-weight="600" text-anchor="start"><tspan x="52" y="315">Payment platform</tspan></text>
+          </g>
         </g>
-        <g id="node-orders" data-node-id="orders" data-node-label="Orders" tabindex="0" role="button" aria-label="Focus Orders, Order lifecycle, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Order lifecycle" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-backend">
+        <g id="node-orders" data-node-id="orders" data-node-label="Orders" tabindex="0" role="button" aria-label="Focus Orders, Order lifecycle, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Order lifecycle" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-backend tree-tone-1">
           <title>Orders · Order lifecycle · Branch</title>
-          <rect data-tree-stack="" x="121" y="184" width="140" height="59" rx="10" class="tree-stack-backend" stroke-width="1.2"/>
-          <rect x="116" y="179" width="140" height="59" rx="10" class="c-mask"/>
-          <rect x="116" y="179" width="140" height="59" rx="10" class="c-backend tree-branch" data-animate="node" style="--step:1" stroke-width="1.2"/>
-
-          <circle cx="186" cy="179" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="186" class="t-primary tree-label" font-size="13" font-weight="700" text-anchor="middle"><tspan x="186" y="203.5">Orders</tspan></text>
-          <text data-detail="context" x="186" class="t-muted tree-sublabel" font-size="11" text-anchor="middle"><tspan x="186" y="222.5">Order lifecycle</tspan></text>
+          <g data-tree-shift="">
+            <rect x="363" y="100" width="96" height="45" rx="8" class="c-mask"/>
+            <rect x="363" y="100" width="96" height="45" rx="8" class="c-backend tree-branch tree-pill" data-animate="node" style="--step:1" stroke-width="0"/>
+            <text data-node-label="" x="383" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="383" y="127">Orders</tspan></text>
+          </g>
         </g>
-        <g id="node-payments" data-node-id="payments" data-node-label="Payments" tabindex="0" role="button" aria-label="Focus Payments, Money movement, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Money movement" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-database">
+        <g id="node-payments" data-node-id="payments" data-node-label="Payments" tabindex="0" role="button" aria-label="Focus Payments, Money movement, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Money movement" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-database tree-tone-1">
           <title>Payments · Money movement · Branch</title>
-          <rect data-tree-stack="" x="458" y="184" width="140" height="59" rx="10" class="tree-stack-backend" stroke-width="1.2"/>
-          <rect x="453" y="179" width="140" height="59" rx="10" class="c-mask"/>
-          <rect x="453" y="179" width="140" height="59" rx="10" class="c-backend tree-branch" data-animate="node" style="--step:1" stroke-width="1.2"/>
-
-          <circle cx="523" cy="179" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="523" class="t-primary tree-label" font-size="13" font-weight="700" text-anchor="middle"><tspan x="523" y="203.5">Payments</tspan></text>
-          <text data-detail="context" x="523" class="t-muted tree-sublabel" font-size="11" text-anchor="middle"><tspan x="523" y="222.5">Money movement</tspan></text>
+          <g data-tree-shift="">
+            <rect x="363" y="286" width="114" height="45" rx="8" class="c-mask"/>
+            <rect x="363" y="286" width="114" height="45" rx="8" class="c-backend tree-branch tree-pill" data-animate="node" style="--step:1" stroke-width="0"/>
+            <text data-node-label="" x="383" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="383" y="313">Payments</tspan></text>
+          </g>
         </g>
-        <g id="node-operations" data-node-id="operations" data-node-label="Operations" tabindex="0" role="button" aria-label="Focus Operations, Back-office work, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Back-office work" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-cloud">
+        <g id="node-operations" data-node-id="operations" data-node-label="Operations" tabindex="0" role="button" aria-label="Focus Operations, Back-office work, Branch" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Back-office work" data-node-context="Branch" data-tree-depth="1" data-tree-ancestors="platform" class="tree-hue-cloud tree-tone-1">
           <title>Operations · Back-office work · Branch</title>
-          <rect data-tree-stack="" x="810" y="184" width="140" height="59" rx="10" class="tree-stack-backend" stroke-width="1.2"/>
-          <rect x="805" y="179" width="140" height="59" rx="10" class="c-mask"/>
-          <rect x="805" y="179" width="140" height="59" rx="10" class="c-backend tree-branch" data-animate="node" style="--step:1" stroke-width="1.2"/>
-
-          <circle cx="875" cy="179" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="875" class="t-primary tree-label" font-size="13" font-weight="700" text-anchor="middle"><tspan x="875" y="203.5">Operations</tspan></text>
-          <text data-detail="context" x="875" class="t-muted tree-sublabel" font-size="11" text-anchor="middle"><tspan x="875" y="222.5">Back-office work</tspan></text>
+          <g data-tree-shift="">
+            <rect x="363" y="476" width="132" height="45" rx="8" class="c-mask"/>
+            <rect x="363" y="476" width="132" height="45" rx="8" class="c-backend tree-branch tree-pill" data-animate="node" style="--step:1" stroke-width="0"/>
+            <text data-node-label="" x="383" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="383" y="503">Operations</tspan></text>
+          </g>
         </g>
-        <g id="node-create_order" data-node-id="create_order" data-node-label="Create order" tabindex="0" role="button" aria-label="Focus Create order, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="orders platform" class="tree-hue-backend">
+        <g id="node-create_order" data-node-id="create_order" data-node-label="Create order" tabindex="0" role="button" aria-label="Focus Create order, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="orders platform" class="tree-hue-backend tree-tone-2">
           <title>Create order · Leaf</title>
-
-          <rect x="32" y="294" width="140" height="58" rx="10" class="c-mask"/>
-          <rect x="32" y="294" width="140" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="102" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="102" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="102" y="327">Create order</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="64" width="148" height="45" rx="8" class="c-mask"/>
+            <rect x="631" y="64" width="148" height="45" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="91">Create order</tspan></text>
+          </g>
         </g>
-        <g id="node-cancel_order" data-node-id="cancel_order" data-node-label="Cancel order" tabindex="0" role="button" aria-label="Focus Cancel order, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="orders platform" class="tree-hue-backend">
+        <g id="node-cancel_order" data-node-id="cancel_order" data-node-label="Cancel order" tabindex="0" role="button" aria-label="Focus Cancel order, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="orders platform" class="tree-hue-backend tree-tone-2">
           <title>Cancel order · Leaf</title>
-
-          <rect x="200" y="294" width="140" height="58" rx="10" class="c-mask"/>
-          <rect x="200" y="294" width="140" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="270" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="270" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="270" y="327">Cancel order</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="135" width="148" height="45" rx="8" class="c-mask"/>
+            <rect x="631" y="135" width="148" height="45" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="162">Cancel order</tspan></text>
+          </g>
         </g>
-        <g id="node-card_payment" data-node-id="card_payment" data-node-label="Card payment" tabindex="0" role="button" aria-label="Focus Card payment, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="payments platform" class="tree-hue-database">
+        <g id="node-card_payment" data-node-id="card_payment" data-node-label="Card payment" tabindex="0" role="button" aria-label="Focus Card payment, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="payments platform" class="tree-hue-database tree-tone-2">
           <title>Card payment · Leaf</title>
-
-          <rect x="368" y="294" width="140" height="58" rx="10" class="c-mask"/>
-          <rect x="368" y="294" width="140" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="438" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="438" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="438" y="327">Card payment</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="250" width="149" height="45" rx="8" class="c-mask"/>
+            <rect x="631" y="250" width="149" height="45" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="277">Card payment</tspan></text>
+          </g>
         </g>
-        <g id="node-wallet_payment" data-node-id="wallet_payment" data-node-label="Wallet payment" tabindex="0" role="button" aria-label="Focus Wallet payment, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="payments platform" class="tree-hue-database">
+        <g id="node-wallet_payment" data-node-id="wallet_payment" data-node-label="Wallet payment" tabindex="0" role="button" aria-label="Focus Wallet payment, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="payments platform" class="tree-hue-database tree-tone-2">
           <title>Wallet payment · Leaf</title>
-
-          <rect x="536" y="294" width="144" height="58" rx="10" class="c-mask"/>
-          <rect x="536" y="294" width="144" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="608" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="608" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="608" y="327">Wallet payment</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="321" width="165" height="45" rx="8" class="c-mask"/>
+            <rect x="631" y="321" width="165" height="45" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="348">Wallet payment</tspan></text>
+          </g>
         </g>
-        <g id="node-refunds" data-node-id="refunds" data-node-label="Refund handling" tabindex="0" role="button" aria-label="Focus Refund handling, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="operations platform" class="tree-hue-cloud">
+        <g id="node-refunds" data-node-id="refunds" data-node-label="Refund handling" tabindex="0" role="button" aria-label="Focus Refund handling, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="operations platform" class="tree-hue-cloud tree-tone-2">
           <title>Refund handling · Leaf</title>
-
-          <rect x="708" y="294" width="155" height="58" rx="10" class="c-mask"/>
-          <rect x="708" y="294" width="155" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="785.5" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="785.5" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="785.5" y="327">Refund handling</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="436" width="174" height="45" rx="8" class="c-mask"/>
+            <rect x="631" y="436" width="174" height="45" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="463">Refund handling</tspan></text>
+          </g>
         </g>
-        <g id="node-reconciliation" data-node-id="reconciliation" data-node-label="Transaction reconciliation" tabindex="0" role="button" aria-label="Focus Transaction reconciliation, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="operations platform" class="tree-hue-cloud">
+        <g id="node-reconciliation" data-node-id="reconciliation" data-node-label="Transaction reconciliation" tabindex="0" role="button" aria-label="Focus Transaction reconciliation, Leaf" aria-pressed="false" data-node-kind="external" data-node-context="Leaf" data-tree-depth="2" data-tree-ancestors="operations platform" class="tree-hue-cloud tree-tone-2">
           <title>Transaction reconciliation · Leaf</title>
-
-          <rect x="891" y="294" width="146" height="58" rx="10" class="c-mask"/>
-          <rect x="891" y="294" width="146" height="58" rx="10" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1"/>
-
-          <circle cx="964" cy="294" r="2.6" class="tree-socket" stroke-width="1.4"/>
-          <text data-node-label="" x="964" class="t-primary tree-label" font-size="13" font-weight="560" text-anchor="middle"><tspan x="964" y="318.5">Transaction</tspan><tspan x="964" y="335.5">reconciliation</tspan></text>
-
+          <g data-tree-shift="">
+            <rect x="631" y="507" width="167" height="64" rx="8" class="c-mask"/>
+            <rect x="631" y="507" width="167" height="64" rx="8" class="c-external tree-leaf tree-pill" data-animate="node" style="--step:2" stroke-width="0"/>
+            <text data-node-label="" x="651" class="t-primary tree-label" font-size="14" font-weight="500" text-anchor="start"><tspan x="651" y="534">Transaction</tspan><tspan x="651" y="553">reconciliation</tspan></text>
+          </g>
         </g>
 
         <!-- Branch toggles -->
-        <g data-tree-toggle="platform" data-tree-count="9" data-tree-label-collapse="Collapse Payment platform (9 below)" data-tree-label-expand="Expand Payment platform (9 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Payment platform (9 below)" class="tree-hue-root">
-          <circle cx="523" cy="123" r="14.5" class="tree-toggle-hit"/>
-          <circle cx="523" cy="123" r="7.5" class="tree-toggle-disc" stroke-width="1.2"/>
-          <path class="tree-toggle-glyph" d="M 519.85 123 H 526.15" stroke-width="1.5" stroke-linecap="round"/>
-          <path class="tree-toggle-glyph tree-toggle-plus" d="M 523 119.85 V 126.15" stroke-width="1.5" stroke-linecap="round"/>
-          <g class="tree-toggle-count">
-            <rect x="533.5" y="115.5" width="17.2" height="15" rx="7.5" class="tree-count-pill"/>
-            <text x="542.1" y="126.6" class="t-primary" font-size="10" font-weight="700" text-anchor="middle">9</text>
-          </g>
+        <g data-tree-toggle="platform" data-tree-count="9" data-tree-depth="0" data-tree-label-collapse="Collapse Payment platform (9 below)" data-tree-label-expand="Expand Payment platform (9 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Payment platform (9 below)" class="tree-hue-root tree-tone-0">
+          <circle cx="248" cy="310.5" r="17" class="tree-toggle-hit"/>
+          <circle cx="248" cy="310.5" r="11" class="tree-toggle-disc" stroke-width="0"/>
+          <path class="tree-toggle-glyph tree-toggle-open" d="M 249.75 307 L 246.25 310.5 L 249.75 314" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path class="tree-toggle-glyph tree-toggle-closed" d="M 246.25 307 L 249.75 310.5 L 246.25 314" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
-        <g data-tree-toggle="orders" data-tree-count="2" data-tree-ancestors="platform" data-tree-label-collapse="Collapse Orders (2 below)" data-tree-label-expand="Expand Orders (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Orders (2 below)" class="tree-hue-backend">
-          <circle cx="186" cy="238" r="14.5" class="tree-toggle-hit"/>
-          <circle cx="186" cy="238" r="7.5" class="tree-toggle-disc" stroke-width="1.2"/>
-          <path class="tree-toggle-glyph" d="M 182.85 238 H 189.15" stroke-width="1.5" stroke-linecap="round"/>
-          <path class="tree-toggle-glyph tree-toggle-plus" d="M 186 234.85 V 241.15" stroke-width="1.5" stroke-linecap="round"/>
-          <g class="tree-toggle-count">
-            <rect x="196.5" y="230.5" width="17.2" height="15" rx="7.5" class="tree-count-pill"/>
-            <text x="205.1" y="241.6" class="t-primary" font-size="10" font-weight="700" text-anchor="middle">2</text>
-          </g>
+        <g data-tree-toggle="orders" data-tree-count="2" data-tree-depth="1" data-tree-ancestors="platform" data-tree-initially-collapsed="" data-tree-label-collapse="Collapse Orders (2 below)" data-tree-label-expand="Expand Orders (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Orders (2 below)" class="tree-hue-backend tree-tone-1">
+          <circle cx="480" cy="122.5" r="17" class="tree-toggle-hit"/>
+          <circle cx="480" cy="122.5" r="11" class="tree-toggle-disc" stroke-width="0"/>
+          <path class="tree-toggle-glyph tree-toggle-open" d="M 481.75 119 L 478.25 122.5 L 481.75 126" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path class="tree-toggle-glyph tree-toggle-closed" d="M 478.25 119 L 481.75 122.5 L 478.25 126" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
-        <g data-tree-toggle="payments" data-tree-count="2" data-tree-ancestors="platform" data-tree-label-collapse="Collapse Payments (2 below)" data-tree-label-expand="Expand Payments (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Payments (2 below)" class="tree-hue-database">
-          <circle cx="523" cy="238" r="14.5" class="tree-toggle-hit"/>
-          <circle cx="523" cy="238" r="7.5" class="tree-toggle-disc" stroke-width="1.2"/>
-          <path class="tree-toggle-glyph" d="M 519.85 238 H 526.15" stroke-width="1.5" stroke-linecap="round"/>
-          <path class="tree-toggle-glyph tree-toggle-plus" d="M 523 234.85 V 241.15" stroke-width="1.5" stroke-linecap="round"/>
-          <g class="tree-toggle-count">
-            <rect x="533.5" y="230.5" width="17.2" height="15" rx="7.5" class="tree-count-pill"/>
-            <text x="542.1" y="241.6" class="t-primary" font-size="10" font-weight="700" text-anchor="middle">2</text>
-          </g>
+        <g data-tree-toggle="payments" data-tree-count="2" data-tree-depth="1" data-tree-ancestors="platform" data-tree-initially-collapsed="" data-tree-label-collapse="Collapse Payments (2 below)" data-tree-label-expand="Expand Payments (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Payments (2 below)" class="tree-hue-database tree-tone-1">
+          <circle cx="498" cy="308.5" r="17" class="tree-toggle-hit"/>
+          <circle cx="498" cy="308.5" r="11" class="tree-toggle-disc" stroke-width="0"/>
+          <path class="tree-toggle-glyph tree-toggle-open" d="M 499.75 305 L 496.25 308.5 L 499.75 312" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path class="tree-toggle-glyph tree-toggle-closed" d="M 496.25 305 L 499.75 308.5 L 496.25 312" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
-        <g data-tree-toggle="operations" data-tree-count="2" data-tree-ancestors="platform" data-tree-label-collapse="Collapse Operations (2 below)" data-tree-label-expand="Expand Operations (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Operations (2 below)" class="tree-hue-cloud">
-          <circle cx="875" cy="238" r="14.5" class="tree-toggle-hit"/>
-          <circle cx="875" cy="238" r="7.5" class="tree-toggle-disc" stroke-width="1.2"/>
-          <path class="tree-toggle-glyph" d="M 871.85 238 H 878.15" stroke-width="1.5" stroke-linecap="round"/>
-          <path class="tree-toggle-glyph tree-toggle-plus" d="M 875 234.85 V 241.15" stroke-width="1.5" stroke-linecap="round"/>
-          <g class="tree-toggle-count">
-            <rect x="885.5" y="230.5" width="17.2" height="15" rx="7.5" class="tree-count-pill"/>
-            <text x="894.1" y="241.6" class="t-primary" font-size="10" font-weight="700" text-anchor="middle">2</text>
-          </g>
+        <g data-tree-toggle="operations" data-tree-count="2" data-tree-depth="1" data-tree-ancestors="platform" data-tree-initially-collapsed="" data-tree-label-collapse="Collapse Operations (2 below)" data-tree-label-expand="Expand Operations (2 hidden)" role="button" tabindex="0" aria-expanded="true" aria-label="Collapse Operations (2 below)" class="tree-hue-cloud tree-tone-1">
+          <circle cx="516" cy="498.5" r="17" class="tree-toggle-hit"/>
+          <circle cx="516" cy="498.5" r="11" class="tree-toggle-disc" stroke-width="0"/>
+          <path class="tree-toggle-glyph tree-toggle-open" d="M 517.75 495 L 514.25 498.5 L 517.75 502" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path class="tree-toggle-glyph tree-toggle-closed" d="M 514.25 495 L 517.75 498.5 L 514.25 502" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
 
         <!-- Expand all (shown only while a branch is collapsed) -->
@@ -6094,6 +6074,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.setAttribute('aria-expanded', 'true');
           el.setAttribute('aria-label', el.getAttribute('data-tree-label-collapse') || '');
         });
+        // A reflowed mind map goes back to the authored layout of the whole tree.
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-tree-shift], [data-tree-toggle], [data-tree-leaving]'), function (el) {
+          if (el.hasAttribute('data-tree-shift') || el.hasAttribute('data-tree-toggle')) el.removeAttribute('transform');
+          el.style.removeProperty('opacity');
+          if (!el.getAttribute('style')) el.removeAttribute('style');
+          el.removeAttribute('data-tree-leaving');
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-tree-authored-d]'), function (el) {
+          el.setAttribute('d', el.getAttribute('data-tree-authored-d'));
+          el.removeAttribute('data-tree-authored-d');
+          el.style.removeProperty('opacity');
+          if (!el.getAttribute('style')) el.removeAttribute('style');
+        });
         return !clone.hasAttribute('data-view-scale') &&
           !clone.hasAttribute('data-focus-active') &&
           !clone.hasAttribute('data-reach-active') &&
@@ -6112,7 +6105,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           !clone.hasAttribute('data-tree-any-collapsed') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
+          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed], [data-tree-leaving], [data-tree-authored-d], [data-tree-shift][transform], [data-tree-toggle][transform]').length === 0;
       }
 
 
@@ -7829,6 +7822,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         style.textContent = rules.join('\n');
         document.head.appendChild(style);
       }
+      function trailOf(len) {
+        return len >= 120
+          ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
+          : (len >= 60
+            ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
+            : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+      }
+      // A Viewer module that moves an edge (a reflowing mind map) refits the
+      // flow layers drawn along it to the new path. The choreography and its
+      // timing stay as planned; only geometry follows the edge.
+      function retrace(shape) {
+        var d = shape && (shape.getAttribute('data-motion-path') || shape.getAttribute('d'));
+        if (!d) return false;
+        var len = 0;
+        var authoredDash = '';
+        try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+        var dashed = !!(authoredDash && authoredDash !== 'none');
+        for (var flow = shape.nextElementSibling; flow && flow.hasAttribute('data-ambient-flow-overlay'); flow = flow.nextElementSibling) {
+          if (flow.localName === 'path') {
+            flow.setAttribute('d', d);
+            if (!len) { try { len = flow.getTotalLength(); } catch (_) {} }
+            if (!(len > 0)) continue;
+            if (flow.style.getPropertyValue('--flow-len')) flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+            if (flow.classList.contains('ambient-flow-wake') && !dashed) flow.style.setProperty('--flow-dasharray', len.toFixed(1) + ' ' + len.toFixed(1));
+            if (flow.classList.contains('ambient-flow-tail') && flow.style.getPropertyValue('--flow-dasharray')) flow.style.setProperty('--flow-dasharray', trailOf(len).pattern);
+          } else if (flow.localName === 'circle' && flow.classList.contains('ambient-flow-ripple') && len > 0) {
+            var end = null;
+            try { end = flow.previousElementSibling.getPointAtLength(len); } catch (_) {}
+            if (end) { flow.setAttribute('cx', end.x.toFixed(1)); flow.setAttribute('cy', end.y.toFixed(1)); }
+          }
+        }
+        return true;
+      }
       function createFlows() {
         var records = [];
         Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
@@ -7888,11 +7914,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           // each layer behind the head tip by its own length.
           var headLen = Math.min(14, Math.max(7, len * 0.03));
           var haloLen = Math.min(22, Math.max(12, len * 0.07));
-          var trail = len >= 120
-            ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
-            : (len >= 60
-              ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
-              : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+          var trail = trailOf(len);
           record.layers.push(
             { flow: wake, kind: 'wake', dash: len, shift: 0 },
             { flow: addPath('glow'), kind: 'comet', dash: haloLen, shift: (haloLen - headLen) / 2 },
@@ -8199,7 +8221,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         release: release,
         suspend: suspend,
         isPaused: effectivePaused,
-        owner: function () { return owner; }
+        owner: function () { return owner; },
+        retrace: retrace
       };
     })();
 
@@ -8249,8 +8272,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Tree Branches — expand/collapse for hierarchy diagrams. The renderer
        lays out the complete tree once and tags every node, link, and toggle
-       with its ancestors; collapsing only hides descendants, so visible nodes
-       never move and the reader keeps their place. Selecting a hidden node
+       with its ancestors. In a classic tree collapsing only hides descendants,
+       so visible nodes never move and the reader keeps their place; a mind
+       map reflows around the open branches and the camera follows the one
+       the reader toggled (see Mind map below). Selecting a hidden node
        through Finder, Outline, or a shared link expands its ancestors. Export
        always writes the complete tree (see Export Cleanup).
        ============================================================ */
@@ -8292,17 +8317,251 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else svg.removeAttribute('data-tree-any-collapsed');
       }
 
-      function setCollapsed(id, value) {
+      /* Mind map. The renderer placed the complete tree; here only the open
+         part is laid out, with the renderer's own pass, so closing a branch
+         pulls its neighbours together and opening one makes room. Nodes glide
+         between layouts and the camera follows the branch the reader opened.
+         With every branch open the positions are exactly the authored ones. */
+      var mindmap = svg.getAttribute('data-tree-style') === 'mindmap' ? buildMindmap() : null;
+      var motionFrame = 0;
+
+      function buildMindmap() {
+        var values = (svg.getAttribute('data-tree-mindmap') || '').split(' ').map(Number);
+        if (values.length !== 7 || !values.every(isFinite)) return null;
+        var gap = { top: values[0], margin: values[1], row: values[2], group: values[3], link: values[4], toggle: values[5], r: values[6] };
+        var items = Object.create(null);
+        var order = [];
+        var root = null;
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id][data-tree-depth]'), function (el) {
+          var pill = el.querySelector('.tree-pill');
+          var shift = el.querySelector('[data-tree-shift]');
+          if (!pill || !shift) return;
+          var id = el.getAttribute('data-node-id');
+          var item = {
+            id: id, el: el, shift: shift, toggle: toggles[id] || null, edge: null,
+            depth: Number(el.getAttribute('data-tree-depth')), parent: ancestors(el)[0] || null, children: [],
+            x: Number(pill.getAttribute('x')), y: Number(pill.getAttribute('y')),
+            w: Number(pill.getAttribute('width')), h: Number(pill.getAttribute('height')),
+            shown: true
+          };
+          item.cur = { x: item.x, y: item.y, o: 1 };
+          items[id] = item;
+          order.push(item);
+        });
+        order.forEach(function (item) {
+          if (item.parent && items[item.parent]) items[item.parent].children.push(item);
+          else if (!item.parent) root = item;
+        });
+        Array.prototype.forEach.call(svg.querySelectorAll('.tree-curve[data-edge-to]'), function (edge) {
+          var item = items[edge.getAttribute('data-edge-to')];
+          if (!item) return;
+          item.edge = edge;
+          // Export restores the authored link from here (see Export Cleanup).
+          edge.setAttribute('data-tree-authored-d', edge.getAttribute('d'));
+        });
+        return root ? { gap: gap, items: items, order: order, root: root } : null;
+      }
+
+      function isOpen(item) { return item.children.length > 0 && !collapsed[item.id]; }
+
+      // The renderer's placeMindmap(), over the nodes that are not hidden.
+      function mindmapLayout() {
+        var gap = mindmap.gap;
+        var width = [];
+        (function measure(item) {
+          width[item.depth] = Math.max(width[item.depth] || 0, item.w);
+          if (isOpen(item)) item.children.forEach(measure);
+        })(mindmap.root);
+        var columnX = [gap.margin];
+        for (var depth = 1; depth < width.length; depth += 1) {
+          columnX[depth] = columnX[depth - 1] + width[depth - 1] + gap.toggle + gap.r * 2 + gap.link;
+        }
+        var pos = Object.create(null);
+        var cursor = gap.top;
+        (function place(item) {
+          var center;
+          if (isOpen(item)) {
+            var centers = item.children.map(function (child, index) {
+              if (index && (isOpen(child) || isOpen(item.children[index - 1]))) cursor += gap.group;
+              return place(child);
+            });
+            center = (centers[0] + centers[centers.length - 1]) / 2;
+          } else {
+            center = cursor + item.h / 2;
+            cursor += item.h + gap.row;
+          }
+          pos[item.id] = { x: Math.round(columnX[item.depth]), y: Math.round(center - item.h / 2) };
+          return center;
+        })(mindmap.root);
+        var top = pos[mindmap.root.id].y;
+        Object.keys(pos).forEach(function (id) { top = Math.min(top, pos[id].y); });
+        var lift = Math.max(0, gap.margin - top);
+        if (lift) Object.keys(pos).forEach(function (id) { pos[id].y += lift; });
+        return pos;
+      }
+
+      function linkPath(parent, child) {
+        var gap = mindmap.gap;
+        var round = function (value) { return Math.round(value * 10) / 10; };
+        var sx = parent.cur.x + parent.w;
+        var sy = parent.cur.y + parent.h / 2;
+        var tx = sx + gap.toggle + gap.r;
+        var ex = child.cur.x;
+        var ey = child.cur.y + child.h / 2;
+        var reach = (ex - tx) / 2;
+        return 'M ' + round(sx) + ' ' + round(sy) + ' H ' + round(tx) + ' C ' + round(tx + reach) + ' ' + round(sy) + ' ' +
+          round(ex - reach) + ' ' + round(ey) + ' ' + round(ex) + ' ' + round(ey);
+      }
+
+      function draw(item, settled) {
+        var dx = Math.round((item.cur.x - item.x) * 100) / 100;
+        var dy = Math.round((item.cur.y - item.y) * 100) / 100;
+        var transform = dx || dy ? 'translate(' + dx + ' ' + dy + ')' : null;
+        [item.shift, item.toggle].forEach(function (el) {
+          if (!el) return;
+          if (transform) el.setAttribute('transform', transform);
+          else el.removeAttribute('transform');
+          fade(el, settled ? null : item.cur.o);
+        });
+        if (item.edge) {
+          var parent = mindmap.items[item.parent];
+          var home = !transform && parent.cur.x === parent.x && parent.cur.y === parent.y;
+          item.edge.setAttribute('d', home ? item.edge.getAttribute('data-tree-authored-d') : linkPath(parent, item));
+          fade(item.edge, settled ? null : item.cur.o);
+        }
+      }
+
+      // A settled element carries no motion residue, not even an empty style.
+      function fade(el, opacity) {
+        if (opacity !== null) { el.style.opacity = String(opacity); return; }
+        el.style.removeProperty('opacity');
+        if (!el.getAttribute('style')) el.removeAttribute('style');
+      }
+
+      function shownAncestor(item) {
+        var current = mindmap.items[item.parent];
+        while (current && !current.shown) current = mindmap.items[current.parent];
+        return current || mindmap.root;
+      }
+
+      function reducedMotion() {
+        return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+
+      // Glide every node from where it is to its new place. Entering nodes grow
+      // out of their parent; leaving ones fold back into it and then hide.
+      function reflow(options) {
+        if (!mindmap) return null;
+        options = options || {};
+        var pos = mindmapLayout();
+        var moves = [];
+        mindmap.order.forEach(function (item) {
+          var to = pos[item.id];
+          if (to) {
+            var from = item.shown ? { x: item.cur.x, y: item.cur.y, o: item.cur.o } : null;
+            if (!from) {
+              var origin = shownAncestor(item);
+              from = { x: origin.cur.x, y: origin.cur.y, o: 0 };
+            }
+            moves.push({ item: item, from: from, to: { x: to.x, y: to.y, o: 1 } });
+          } else if (item.shown) {
+            var keeper = mindmap.items[item.parent];
+            while (keeper && !pos[keeper.id]) keeper = mindmap.items[keeper.parent];
+            var home = pos[(keeper || mindmap.root).id];
+            moves.push({ item: item, from: { x: item.cur.x, y: item.cur.y, o: item.cur.o }, to: { x: home.x, y: home.y, o: 0 }, leaving: true });
+          }
+        });
+        moves.forEach(function (move) { move.item.shown = !move.leaving; });
+        cancelAnimationFrame(motionFrame);
+        var instant = options.instant === true || reducedMotion() || document.hidden;
+        var settle = function () {
+          // Focus copies each link once for its wider hit rail; keep the copies on the links.
+          var rails = Object.create(null);
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-relationship-hit-key] [data-tree-authored-d]'), function (shape) {
+            var to = shape.closest('[data-relationship-hit-key]').getAttribute('data-relationship-to');
+            (rails[to] = rails[to] || []).push(shape);
+          });
+          moves.forEach(function (move) {
+            move.item.cur = move.to;
+            draw(move.item, true);
+            if (move.item.edge) {
+              (rails[move.item.id] || []).forEach(function (shape) { shape.setAttribute('d', move.item.edge.getAttribute('d')); });
+              // Live motion draws its flow layers along each link; they follow it too.
+              if (Archify.motionGovernor && typeof Archify.motionGovernor.retrace === 'function') Archify.motionGovernor.retrace(move.item.edge);
+            }
+            [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.removeAttribute('data-tree-leaving'); });
+          });
+          if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();
+        };
+        if (instant) { settle(); return pos; }
+        moves.forEach(function (move) {
+          if (move.leaving) [move.item.el, move.item.toggle, move.item.edge].forEach(function (el) { if (el) el.setAttribute('data-tree-leaving', ''); });
+        });
+        var duration = 420;
+        var startedAt = 0;
+        var step = function (timestamp) {
+          if (!startedAt) startedAt = timestamp;
+          var t = Math.min(1, (timestamp - startedAt) / duration);
+          var eased = 1 - Math.pow(1 - t, 4);
+          moves.forEach(function (move) {
+            move.item.cur = {
+              x: move.from.x + (move.to.x - move.from.x) * eased,
+              y: move.from.y + (move.to.y - move.from.y) * eased,
+              o: move.from.o + (move.to.o - move.from.o) * eased
+            };
+          });
+          moves.forEach(function (move) { draw(move.item, false); });
+          if (t < 1) motionFrame = requestAnimationFrame(step);
+          else settle();
+        };
+        motionFrame = requestAnimationFrame(step);
+        return pos;
+      }
+
+      // Bring the branch the reader just toggled to the middle of the view: the
+      // node itself, the links that reach it for context, and, once open, all
+      // of its children. Opening zooms in a little, or out as far as the
+      // branch needs; closing keeps the zoom and recentres on the node.
+      function focusBranch(id, pos) {
+        var view = Archify.view;
+        var item = mindmap && mindmap.items[id];
+        if (!item || !pos || !pos[id] || !view || typeof view.centerAt !== 'function' || typeof view.logicalViewport !== 'function') return;
+        var gap = mindmap.gap;
+        var at = pos[id];
+        var middle = at.y + item.h / 2;
+        var left = item.parent ? Math.max(0, at.x - gap.link) : at.x;
+        var right = at.x + item.w + gap.toggle + gap.r * 2;
+        var reach = item.h / 2;
+        if (isOpen(item)) item.children.forEach(function (child) {
+          var spot = pos[child.id];
+          right = Math.max(right, spot.x + child.w + (child.children.length ? gap.toggle + gap.r * 2 : 0));
+          reach = Math.max(reach, Math.abs(spot.y + child.h / 2 - middle) + child.h / 2);
+        });
+        var seen = view.logicalViewport();
+        if (!seen) return;
+        var current = view.state().scale;
+        var fit = Math.min(seen.width * current / (right - left), seen.height * current / (reach * 2)) * 0.88;
+        var scale = isOpen(item) ? Math.max(1, Math.min(Math.max(current, 1.25), fit)) : current;
+        view.centerAt((left + right) / 2, middle, { scale: scale, glide: true });
+      }
+
+      function setCollapsed(id, value, options) {
         if (!toggles[id]) return false;
         if (value) collapsed[id] = true;
         else delete collapsed[id];
         apply();
+        var reader = Boolean(options && options.focus);
+        var pos = reflow({ instant: !reader });
+        if (reader) focusBranch(id, pos);
         return true;
       }
 
-      function toggle(id) { return setCollapsed(id, !collapsed[id]); }
+      function toggle(id, options) { return setCollapsed(id, !collapsed[id], options); }
 
-      // Reveal a node by expanding every collapsed ancestor; nothing else moves.
+      // Reveal a node by expanding every collapsed ancestor. A classic tree
+      // moves nothing else; a mind map settles at once so focus measures the
+      // node where it ends up. Programmatic collapse and expand settle at once
+      // too; only a toggle the reader uses glides and moves the camera.
       function reveal(id) {
         var node = svg.querySelector('[data-node-id="' + id + '"]');
         if (!node) return false;
@@ -8310,13 +8569,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         ancestors(node).forEach(function (ancestor) {
           if (collapsed[ancestor]) { delete collapsed[ancestor]; changed = true; }
         });
-        if (changed) apply();
+        if (changed) { apply(); reflow({ instant: true }); }
         return changed;
       }
 
-      function restoreAll() {
+      function restoreAll(options) {
         collapsed = Object.create(null);
         apply();
+        reflow({ instant: !(options && options.animate) });
       }
 
       function activate(event) {
@@ -8325,12 +8585,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         event.preventDefault();
         event.stopPropagation();
         if (target.hasAttribute('data-tree-expand-all')) {
-          restoreAll();
+          restoreAll({ animate: true });
+          // The open mind map is the authored canvas, so its overview frames it.
+          if (mindmap && Archify.view && typeof Archify.view.reset === 'function') Archify.view.reset();
           var root = svg.querySelector('[data-tree-toggle]:not([data-tree-ancestors])');
           if (root) root.focus();
         } else {
-          toggle(target.getAttribute('data-tree-toggle'));
-          target.focus();
+          toggle(target.getAttribute('data-tree-toggle'), { focus: true });
+          // The camera, not the browser, decides where a moving map scrolls.
+          target.focus({ preventScroll: true });
         }
         return true;
       }
@@ -8344,8 +8607,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!node || !svg.contains(node)) return;
         var id = node.getAttribute('data-node-id');
         // Arrow keys follow the tree convention: left collapses, right expands.
-        if (event.key === 'ArrowLeft' && toggles[id] && !collapsed[id]) { event.preventDefault(); setCollapsed(id, true); }
-        else if (event.key === 'ArrowRight' && collapsed[id]) { event.preventDefault(); setCollapsed(id, false); }
+        if (event.key === 'ArrowLeft' && toggles[id] && !collapsed[id]) { event.preventDefault(); setCollapsed(id, true, { focus: true }); }
+        else if (event.key === 'ArrowRight' && collapsed[id]) { event.preventDefault(); setCollapsed(id, false, { focus: true }); }
       }, true);
 
       // Focus reveals ancestors synchronously before positioning its lens.
@@ -8363,9 +8626,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (toggles[id].hasAttribute('data-tree-initially-collapsed')) collapsed[id] = true;
       });
       apply();
+      reflow({ instant: true });
 
       return {
         active: true,
+        mindmap: Boolean(mindmap),
         toggle: toggle,
         collapse: function (id) { return setCollapsed(id, true); },
         expand: function (id) { return setCollapsed(id, false); },
@@ -11149,6 +11414,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var cameraFrame = null;
       var cameraGeneration = 0;
       var cameraTransaction = null;
+      var glideTimer = null;
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
@@ -11495,6 +11761,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         state.x = metrics.width / 2 - contentX * state.scale;
         state.y = metrics.height / 2 - contentY * state.scale;
         state.mode = 'manual';
+        // A glide takes the slower camera curve, so a move the reader caused
+        // (such as opening a tree branch) reads as one continuous motion.
+        if (options.glide === true && !reducedMotion()) {
+          container.classList.add('is-camera-moving');
+          clearTimeout(glideTimer);
+          glideTimer = setTimeout(function () { container.classList.remove('is-camera-moving'); }, 460);
+        }
         apply();
         scrollLongDiagramTo(contentY, metrics, options);
         if (Archify.focus && Archify.focus.reposition) Archify.focus.reposition();
