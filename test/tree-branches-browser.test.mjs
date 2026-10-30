@@ -193,12 +193,36 @@ test('Mind map branches reflow, glide, focus the camera, and export complete', {
   await loaded;
   await run('document.fonts.ready');
   await run('Archify.viewerChromeLayout.whenStable()');
-  const settle = () => run('new Promise((resolve) => setTimeout(resolve, 700))');
+  // Wait until nodes and camera stop moving: a fixed delay is too short
+  // when other browser suites load the machine.
+  const settle = () => run(`new Promise((resolve, reject) => {
+    const started = performance.now();
+    let previous = '';
+    let still = 0;
+    (function sample() {
+      const svg = document.querySelector('.diagram-container > svg');
+      const now = JSON.stringify([Archify.view.state(), svg.style.transform,
+        document.querySelectorAll('[data-tree-leaving]').length,
+        [...svg.querySelectorAll('[data-tree-shift]')].map((g) => g.getAttribute('transform')).join('|')]);
+      still = now === previous ? still + 1 : 0;
+      previous = now;
+      if (still >= 6) return resolve();
+      if (performance.now() - started > 8000) return reject(new Error('mind map did not settle'));
+      requestAnimationFrame(sample);
+    })();
+  })`);
   const visible = `[...document.querySelectorAll('.diagram-container > svg [data-node-id]:not([data-tree-hidden])')].map((n) => n.getAttribute('data-node-id'))`;
   const boxes = `[...document.querySelectorAll('.diagram-container > svg [data-node-id]:not([data-tree-hidden]) .tree-pill')].map((r) => { const b = r.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; })`;
   const apart = (list) => list.every((a, i) => list.every((b, j) => j <= i || a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1]));
 
   assert.equal(await run('Archify.treeBranches.mindmap'), true);
+  // The map is one fixed stage: the page fits the window and the wheel moves
+  // the camera, never the page.
+  assert.equal(await run(`document.querySelector('.diagram-container').hasAttribute('data-camera-stage')`), true);
+  assert.ok(await run('document.documentElement.scrollHeight <= innerHeight + 1'), 'page fits one screen');
+  await send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: 600, y: 400, deltaX: 0, deltaY: 400 });
+  await run('new Promise((resolve) => setTimeout(resolve, 150))');
+  assert.equal(await run('scrollY'), 0);
   // The map opens at the first generation, laid out compactly.
   assert.deepEqual(await run(visible), ['platform', 'orders', 'payments', 'operations']);
   assert.ok(apart(await run(boxes)));

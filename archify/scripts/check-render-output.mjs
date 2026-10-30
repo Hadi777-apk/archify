@@ -134,6 +134,7 @@ if (svgMatches.length === 1) {
     viewBoxHeight: viewBoxSize(svgAttrs)[1],
     readerFit: svgAttrs['data-reader-fit'] || null,
     diagramType: svgAttrs['data-diagram-type'] || null,
+    stage: Object.prototype.hasOwnProperty.call(svgAttrs, 'data-camera-stage'),
   });
   const arrows = collectArrows(beforeLegend, workflowV2);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));

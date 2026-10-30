@@ -72,6 +72,18 @@ in up to 125% when the branch fits, closing keeps the zoom. Expand all returns
 to the overview, where the open map equals the authored canvas. Selecting a
 hidden node reveals it and settles at once, so focus measures it in place.
 
+The map is drawn on a fixed stage (`data-camera-stage`), like a notebook
+canvas, not as a page as tall as the whole tree:
+
+- The stage takes the window height the rest of the page leaves, so the page
+  fits one screen, and a strip at its foot holds the navigation dock.
+- The SVG is drawn at its true size times the zoom inside the clipped box. The
+  wheel and drag pan it (a composited move), Ctrl+wheel zooms around the
+  pointer, and the camera stays within the open part of the map, which Tree
+  Branches reports as `bounds()`.
+- Programmatic collapse and expand settle at once; only a toggle the reader
+  uses glides and moves the camera.
+
 ## Classic layout
 
 Each generation shares one band: a row for `layout.direction: "down"` (the

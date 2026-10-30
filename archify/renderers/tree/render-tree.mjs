@@ -624,7 +624,10 @@ function renderEdge(edge) {
 }
 
 function renderSvg() {
-  const readerFit = tree.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
+  // A mind map is one fixed stage the camera pans inside, so the page never
+  // grows with the hidden tree; a classic tree keeps its intrinsic height.
+  const readerFit = mindmap ? ' data-camera-stage=""'
+    : tree.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
   const expandAll = esc(i18nText(locale, 'tree.expandAll'));
   // The Viewer reflows a mind map with the same constants the renderer used.
   const mindmapAttrs = mindmap
