@@ -13,6 +13,11 @@
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
         clone.style.removeProperty('clip-path');
+        // A stage camera sizes the SVG to its zoom; the artifact keeps its viewBox.
+        if (clone.hasAttribute('data-camera-stage')) {
+          clone.style.removeProperty('width');
+          clone.style.removeProperty('height');
+        }
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');

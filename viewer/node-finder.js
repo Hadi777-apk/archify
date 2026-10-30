@@ -39,19 +39,23 @@
         return types.find(function (type) { return node.querySelector('.c-' + type); }) || 'node';
       }
 
-      function connectionsFor(id) {
-        var count = 0;
-        var seen = {};
+      // Count each node's distinct connections in one pass over the edges;
+      // asking every node to scan every edge stalls large diagrams.
+      var connectionCounts = Object.create(null);
+      (function () {
+        var seen = Object.create(null);
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           var key = from + '\u0000' + to;
-          if ((from === id || to === id) && !seen[key]) {
-            seen[key] = true;
-            count += 1;
-          }
+          if (seen[key]) return;
+          seen[key] = true;
+          connectionCounts[from] = (connectionCounts[from] || 0) + 1;
+          if (to !== from) connectionCounts[to] = (connectionCounts[to] || 0) + 1;
         });
-        return count;
+      })();
+      function connectionsFor(id) {
+        return connectionCounts[id] || 0;
       }
 
       var items = Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {

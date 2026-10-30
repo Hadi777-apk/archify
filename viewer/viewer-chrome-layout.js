@@ -36,8 +36,30 @@
         var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
         return width * height;
       }
+      // A stage (data-camera-stage) is a fixed box whose dock floats over the
+      // canvas, so it never reserves room; what the resting dock must stay
+      // clear of is the open part of the diagram as it sits in the box.
+      function isStage() {
+        return Boolean(container && container.hasAttribute('data-camera-stage'));
+      }
+      function openStageRect() {
+        var bounds = Archify.treeBranches && typeof Archify.treeBranches.bounds === 'function' ? Archify.treeBranches.bounds() : null;
+        var viewBox = svg.viewBox && svg.viewBox.baseVal;
+        if (!bounds || !viewBox || !viewBox.width) return null;
+        var rect = svg.getBoundingClientRect();
+        var box = container.getBoundingClientRect();
+        var k = rect.width / viewBox.width;
+        var left = Math.max(box.left, rect.left + (bounds.x0 - viewBox.x) * k);
+        var top = Math.max(box.top, rect.top + (bounds.y0 - viewBox.y) * k);
+        var right = Math.min(box.right, rect.left + (bounds.x1 - viewBox.x) * k);
+        var band = parseFloat(container.style.getPropertyValue('--archify-stage-band')) || 0;
+        var bottom = Math.min(box.bottom - band, rect.top + (bounds.y1 - viewBox.y) * k);
+        if (right <= left || bottom <= top) return null;
+        return { x: left, y: top, left: left, top: top, right: right, bottom: bottom, width: right - left, height: bottom - top };
+      }
       function protectedStageRect() {
         if (!svg) return null;
+        if (isStage()) return openStageRect();
         var rect = svg.getBoundingClientRect();
         var transform = '';
         try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
@@ -94,7 +116,7 @@
       }
       function writeReserve(next, options) {
         options = options || {};
-        next = Math.max(0, Math.ceil(next));
+        next = isStage() ? 0 : Math.max(0, Math.ceil(next));
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
@@ -162,8 +184,10 @@
         }
         if (next === lift) return;
         lift = next;
-        if (lift) container.style.setProperty('--archify-dock-lift', lift + 'px');
-        else container.style.removeProperty('--archify-dock-lift');
+        // Only the dock reads the lift. Set on the container, the inherited
+        // property would restyle every SVG element on every scroll frame.
+        if (lift) nav.style.setProperty('--archify-dock-lift', lift + 'px');
+        else if (nav) nav.style.removeProperty('--archify-dock-lift');
       }
       function scheduleLift() {
         if (!liftFrame) liftFrame = requestAnimationFrame(updateLift);

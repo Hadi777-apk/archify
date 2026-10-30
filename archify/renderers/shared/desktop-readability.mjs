@@ -91,18 +91,22 @@ export const DESKTOP_FIXED_VERTICAL_CHROME_PX = Object.freeze({ body: 12, header
 // threshold) nor scroll readably (no automatic Reader fit) renders at the full
 // reader width, so its page height is a function of the viewBox alone. Returns
 // null when the Reader has a way to fit the page; otherwise the certain
-// overflow at 1440x900 before any cards are counted.
+// overflow at 1440x900 before any cards are counted. A stage never overflows.
 export function predictedFixedWidthOverflow({
   viewBoxWidth,
   viewBoxHeight,
   readerFit,
   diagramType,
+  stage = false,
   viewport = DESKTOP_READABILITY_VIEWPORT,
   bodyHorizontalPx = DECLARED_WIDE_REFERENCE_BODY_HORIZONTAL_PX,
   diagramHorizontalPx = DECLARED_WIDE_REFERENCE_DIAGRAM_HORIZONTAL_PX,
   chrome = DESKTOP_FIXED_VERTICAL_CHROME_PX,
 } = {}) {
   if (![viewBoxWidth, viewBoxHeight].every(Number.isFinite) || viewBoxWidth <= 0 || viewBoxHeight <= 0) return null;
+  // A stage (data-camera-stage) is one viewport-tall box the camera pans
+  // inside, so its page height never follows the viewBox.
+  if (stage) return null;
   const ratio = viewBoxWidth / viewBoxHeight;
   if (readerFit === 'intrinsic-height' || readerFit === 'width-first'
       || (readerFit === 'authored-height' && diagramType === 'architecture')

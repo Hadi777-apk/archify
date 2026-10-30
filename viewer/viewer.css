@@ -754,6 +754,35 @@ svg {
 .diagram-container.is-panning { cursor: grabbing; user-select: none; }
 .diagram-container.is-panning svg { transition: none; }
 
+/* A stage (a mind map) is one fixed rectangle. The camera sizes the SVG to
+   its true size times the zoom and translates it inside the clipped box, so
+   the page never grows with the diagram and panning stays a composited move. */
+.diagram-container[data-camera-stage] {
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
+  cursor: grab;
+}
+.diagram-container[data-camera-stage].is-panning { cursor: grabbing; }
+.diagram-container[data-camera-stage]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--archify-stage-band, 0px);
+  background: var(--panel);
+  border-top: 1px solid var(--panel-border);
+  z-index: 11;
+}
+.diagram-container[data-camera-stage] > svg {
+  min-width: 0;
+  max-width: none;
+  flex-shrink: 0;
+  transition: none;
+  will-change: transform;
+}
+
 .diagram-nav {
   position: absolute;
   right: 1rem;

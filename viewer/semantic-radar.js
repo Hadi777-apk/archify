@@ -54,9 +54,17 @@
         mapSvg.setAttribute('viewBox', [viewBox.x, viewBox.y, viewBox.width, viewBox.height].join(' '));
         nodeLayer.textContent = '';
         nodes = [];
-        Array.prototype.forEach.call(diagram.querySelectorAll('[data-node-id]'), function (node) {
+        // Measure every node before inserting any rect: interleaving the two
+        // forces a layout per node, which stalls large diagrams.
+        var measured = Array.prototype.map.call(diagram.querySelectorAll('[data-node-id]'), function (node) {
           var box;
           try { box = node.getBBox(); } catch (_) { box = null; }
+          return { node: node, box: box };
+        });
+        var layer = document.createDocumentFragment();
+        measured.forEach(function (entry) {
+          var node = entry.node;
+          var box = entry.box;
           if (!box || box.width <= 0 || box.height <= 0) return;
           var id = node.getAttribute('data-node-id');
           var rect = document.createElementNS(namespace, 'rect');
@@ -71,9 +79,10 @@
           rect.setAttribute('tabindex', '0');
           rect.setAttribute('role', 'button');
           rect.setAttribute('aria-label', viewerText('viewer.radar.focus', { label: nodeLabel(node, id) }));
-          nodeLayer.appendChild(rect);
+          layer.appendChild(rect);
           nodes.push({ id: id, node: node, rect: rect });
         });
+        nodeLayer.appendChild(layer);
         status.textContent = viewerText('viewer.radar.fullMap', { count: nodes.length });
         return true;
       }
